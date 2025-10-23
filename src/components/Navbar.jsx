@@ -1,13 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { faBars, faPerson } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faCartShopping } from '@fortawesome/free-solid-svg-icons'
+
 import MenuHam from './MenuHam';
+import { useLocation } from "react-router-dom"; // 👈 Detectar ruta actual
 
 export default function Navbar() {
+    const location = useLocation();
+    const isHome = location.pathname === "/"; // 👈 Solo consideramos Home la ruta "/"
 
-    const [scrolled, setScrolled] = useState(false);
+    // Estado inicial:
+    // - En Home: arranca según la posición de scroll (transparente arriba, sólido al bajar).
+    // - En otras rutas: "scrolled" en true para forzar el fondo sólido siempre.
+    const [scrolled, setScrolled] = useState(() => {
+        if (!isHome) return true;
+        if (typeof window === "undefined") return false;
+        return window.scrollY > 100;
+    });
 
     useEffect(() => {
+        // Si NO es Home:
+        // - No registramos listener de scroll.
+        // - Aseguramos fondo sólido.
+        if (!isHome) {
+            setScrolled(true);
+            return;
+        }
+
+        // Solo en Home: registrar y manejar scroll
         const handleScroll = () => {
             if (window.scrollY > 100) {
                 setScrolled(true);
@@ -15,21 +36,78 @@ export default function Navbar() {
                 setScrolled(false);
             }
         };
+
         window.addEventListener("scroll", handleScroll);
+        // Forzamos evaluación inicial por si el usuario entra con un scroll previo (anclas, etc.)
+        handleScroll();
+
         return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+    }, [isHome]);
+
+    // Clases comunes
+    const baseClasses =
+        "p-2 flex-col justify-center align-center border-b border-gray-300 z-10 w-full transition-colors duration-300";
+
+    // Posición:
+    // - Home: fixed
+    // - Resto: relative
+    const positionClass = isHome ? "fixed" : "sticky top-0";
+
+    // Fondo:
+    // - Home: cambia con scroll (transparente ↔ rojo)
+    // - Resto: siempre rojo
+    const bgClass = isHome
+        ? (scrolled ? "bg-red-600" : "bg-transparent")
+        : "bg-red-600";
 
     return (
+        <nav className={`${baseClasses} ${positionClass} ${bgClass}`}>
+            <div className="flex relative w-full justify-between items-center h-15">
+                <h1 className="text-2xl font-bold font-Modak absolute"><a href="/">CARDS</a></h1>
+                <div className=" justify-center items-center text-center flex w-full ">
 
-        <nav className={`p-2 fixed flex-col justify-center align-center border-b border-gray-300 z-10 w-full transition-colors duration-300
-      ${scrolled ? "bg-red-600" : "bg-transparent"}`}
-        >
-            <div className="flex relative w-full justify-between items-center">
-                
-                <div className="flex-col justify-center items-center text-center">
-                    <h1 className="text-2xl font-bold font-Modak">CARDS</h1>
+
+                    <a href="/catalogo" className="text-xl text-white
+                transition-colors duration-200 ease-out
+             hover:text-gray-400 w-30">Catálogo</a>
+
+             <span className="text-2xl"> | </span>
+
+                    <a href="/catalogo" className="text-xl text-white
+                transition-colors duration-200 ease-out
+             hover:text-gray-400 w-30">Mazo</a>
+
                 </div>
-                <MenuHam />
+
+
+                <ul>
+                    <div className="hidden sm:flex justify-center gap-4 text-center text-sm mt-8">
+
+
+                    </div>
+                </ul>
+                <div className="flex items-center gap-10 mr-10 absolute right-0">
+                    <a
+                        href="/cart"
+                        className="text-2xl inline-flex h-6 w-6 items-center justify-center text-white
+               transition-transform transition-colors duration-200 ease-out
+               hover:scale-110 hover:text-red-400"
+                    >
+                        <FontAwesomeIcon icon={faCartShopping} />
+                    </a>
+
+                    <a
+                        href="/cuenta"
+                        className="text-2xl inline-flex h-6 w-6 items-center justify-center text-white
+               transition-transform transition-colors duration-200 ease-out
+               hover:scale-110 hover:text-red-400"
+                    >
+                        <FontAwesomeIcon icon={faUser} />
+                    </a>
+                </div>
+
+                <div className="sm:hidden"><MenuHam /></div>
+
             </div>
 
             {/*
@@ -56,8 +134,7 @@ export default function Navbar() {
                     </div>
                 </button>
             </ul>
-*/}
-
+      */}
         </nav>
     );
 }

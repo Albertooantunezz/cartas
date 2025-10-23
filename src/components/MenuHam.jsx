@@ -30,14 +30,13 @@ export default function MenuHam() {
             <div
                 className={`fixed top-0 right-0 h-full w-50 bg-red-500 shadow-md flex flex-col gap-8 p-5 transform transition-transform duration-300 ease-in-out z-5
           ${isOpen && !manisOpen && !womenisOpen ? "translate-x-0" : "translate-x-full"}`}
-            >   
-                <button className=" mt-15 flex justify-between " onClick={toggleManis}>
-                    <p > <FontAwesomeIcon icon={faPerson} /> Catálogo</p>
-                    <p>{">"}</p>
+            >
+                <button className=" mt-15 flex justify-between ">
+                    <a href="/catalogo">Catalogo</a>
                 </button>
 
-                <button className="flex justify-between" onClick={toggleWomenis}>
-                    <p> <FontAwesomeIcon icon={faPersonDress} /> Construye tu mazo </p>
+                <button className="flex justify-between">
+                    <p> Construye tu mazo </p>
                     <p>{">"}</p>
                 </button>
 
@@ -48,6 +47,8 @@ export default function MenuHam() {
                     <FontAwesomeIcon icon={faCartShopping} /> Carrito
                 </a>
             </div>
+
+            {/*  
 
             <div
                 className={`fixed top-0 right-0 h-full w-50 bg-red-500 shadow-md flex flex-col gap-8 p-5 transform transition-transform duration-300 ease-in-out z-5
@@ -100,6 +101,7 @@ export default function MenuHam() {
                     <a href="/mujer/accesorios">Accesorios</a>
                 </button>
             </div>
+            */}
         </div>
     )
 }

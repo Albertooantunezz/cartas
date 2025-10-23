@@ -7,6 +7,7 @@ import Opinion from "../components/Opinion";
 export default function Home() {
   return (
     <div className="relative top-0 w-full flex  flex-col items-center justify-center">
+
       <div className="relative">
         <img src="/banner.jpg" alt="Banner Home" className="w-2000 h-140 object-cover opacity-70" />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white  w-full  text-center">
@@ -39,7 +40,7 @@ export default function Home() {
         </div>
         <button className="text-xl bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 mt-10 w-50"> <a href="/catalogo">Catálogo</a></button>
 
-         <Opinion />
+        <Opinion />
       </div>
     </div >
   );
