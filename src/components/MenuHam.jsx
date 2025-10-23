@@ -24,8 +24,8 @@ export default function MenuHam() {
 
     return (
         <div>
-            <button onClick={toggleMenu} className="cursor-pointer fixed bg-transparent text-white-500 rounded top-0 right-0 z-10 m-2">
-                <p className="hover:scale-105 duration-200 text-xl"><FontAwesomeIcon icon={faBars} /></p>
+            <button onClick={toggleMenu} className="mt-5 cursor-pointer fixed bg-transparent text-white-500 rounded top-0 right-0 z-10 m-2">
+                <p className="hover:scale-105 duration-200 text-2xl"><FontAwesomeIcon icon={faBars} /></p>
             </button>
             <div
                 className={`fixed top-0 right-0 h-full w-50 bg-red-500 shadow-md flex flex-col gap-8 p-5 transform transition-transform duration-300 ease-in-out z-5

@@ -63,8 +63,8 @@ export default function Navbar() {
     return (
         <nav className={`${baseClasses} ${positionClass} ${bgClass}`}>
             <div className="flex relative w-full justify-between items-center h-15">
-                <h1 className="text-2xl font-bold font-Modak absolute"><a href="/">CARDS</a></h1>
-                <div className=" justify-center items-center text-center flex w-full ">
+                <h1 className="text-2xl font-bold font-Modak absolute "><a href="/">CARDS</a></h1>
+                <div className=" justify-center items-center text-center flex w-full hidden sm:flex gap-4">
 
 
                     <a href="/catalogo" className="text-xl text-white
@@ -86,7 +86,7 @@ export default function Navbar() {
 
                     </div>
                 </ul>
-                <div className="flex items-center gap-10 mr-10 absolute right-0">
+                <div className="flex items-center gap-10 mr-10 absolute right-0 hidden sm:flex">
                     <a
                         href="/cart"
                         className="text-2xl inline-flex h-6 w-6 items-center justify-center text-white
