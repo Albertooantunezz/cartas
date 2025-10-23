@@ -136,14 +136,30 @@ export default function Catalogo() {
   };
 
 
-  // Desambiguar un “código” tipo mh3-146 | mh3 146 | mh3/146
+  // 🔎 Acepta:
+  //  - "Ancient Tomb (VMA) 289"
+  //  - "Haunted Ridge (MID) 263 F"   (ignora la F final)
+  //  - "Prosper, Tome-Bound (PLST) AFC-2"  (números con letras/guiones)
+  //  - "mh3-146", "eld/1", "mh3 146"
   const parseCode = (raw) => {
     if (!raw) return null;
-    const s = String(raw).trim().toLowerCase().replace(/\s+/g, "-");
-    const m = s.match(/^([a-z0-9]+)[\-\/\s_]+([0-9]+[a-z]?)$/i);
-    if (!m) return null;
-    return { set: m[1], number: m[2] };
+    const s = String(raw).trim();
+
+    // 1) Formato Moxfield: "<name> (SET) <number>[ F]"
+    //    name (cualquier cosa), SET alfanumérico, number alfanumérico con guiones/letras
+    let m = s.match(/^.+\(([A-Za-z0-9]+)\)\s+([A-Za-z0-9\-]+)(?:\s+F)?$/);
+    if (m) {
+      return { set: m[1].toLowerCase(), number: m[2] };
+    }
+
+    // 2) Formatos "SET-#" / "SET/#" / "SET #"
+    const t = s.toLowerCase().replace(/\s+/g, "-");
+    m = t.match(/^([a-z0-9]+)[\-\/\s_]+([a-z0-9\-]+)$/i);
+    if (m) return { set: m[1], number: m[2] };
+
+    return null;
   };
+
 
   // Query compuesta (cuando NO hay name ni codeQuery)
   const computedQuery = useMemo(() => {
@@ -301,6 +317,8 @@ export default function Catalogo() {
     }
   };
 
+
+
   // -----------------------------
   // Render
   // -----------------------------
@@ -328,7 +346,7 @@ export default function Catalogo() {
             <input
               type="text"
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
-              placeholder="Ej: mh3-146 o eld/1"
+              placeholder="Ej: Ancient Tomb (VMA) 289 · mh3-146 · eld/1"
               value={codeQuery}
               onChange={(e) => setCodeQuery(e.target.value)}
             />
@@ -425,29 +443,30 @@ export default function Catalogo() {
         <div className="bg-red-200 text-red-800 px-3 py-2 rounded mb-3">{error}</div>
       )}
 
+
+
       {/* Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-10 gap-3 justify-items-center">
         {cards.slice(0, visibleCount).map((card) => {
           const img = getCardImage(card, "normal");
           const qtyInCart = (items.find(it => it.id === card.id)?.qty) || 0;
 
           return (
-            <div
-              key={card.id}
-              onClick={() => openCardDetail(card)}
-              title="Ver detalles"
-              className="relative group rounded-lg overflow-hidden shadow hover:shadow-md cursor-pointer"
-              style={{
-                height: '180px',
-                backgroundImage: img ? `url(${img})` : 'none',
-                backgroundSize: 'contain',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                backgroundColor: img ? 'transparent' : '#e5e7eb'
-              }}
-            >
+            <div onClick={() => openCardDetail(card)} key={card.id} className="mb-10 cursor-pointer relative w-auto flex justify-center items-center bg-red-100 rounded-lg shadow hover:shadow-md overflow-hidden">
+              <div
+                key={card.id}
+                title="Ver detalles"
+                className=" relative group rounded-lg overflow-hidden shadow hover:shadow-md cursor-pointer"
+                style={{
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'center',
+                }}
+              >
+                <img src={img} alt="" className="h-55" />
+              </div>
               {!img && (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+                <div className="absolute inset-0 flex items-center justify-center text-gray-500 ">
                   Sin imagen
                 </div>
               )}
@@ -509,7 +528,7 @@ export default function Catalogo() {
                 <img
                   src={getCardImage(selectedCard, "large") || getCardImage(selectedCard, "normal")}
                   alt={selectedCard.name}
-                  className="w-full h-[520px] object-contain"
+                  className="rounded-xl h-80 sm:h-150"
                 />
               </div>
 
@@ -518,7 +537,7 @@ export default function Catalogo() {
                 <div className="flex justify-between items-start gap-3">
                   <h2 className="text-xl font-bold">{selectedCard.name}</h2>
                   <button
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-gray-500 hover:text-gray-700 cursor-pointer text-2xl leading-none"
                     onClick={() => setOpenDialog(false)}
                     aria-label="Cerrar"
                   >
@@ -530,11 +549,12 @@ export default function Catalogo() {
                   <div><span className="font-semibold">Set:</span> {selectedCard.set_name} ({selectedCard.set?.toUpperCase()}) • #{selectedCard.collector_number}</div>
                   <div>
                     <span className="font-semibold">Código:</span>{" "}
-                    {selectedCard.set?.toUpperCase()}-{selectedCard.collector_number}
+                    {selectedCard.name} ({selectedCard.set?.toUpperCase()}) {selectedCard.collector_number}
                     {selectedCard.lang ? ` • ${selectedCard.lang.toUpperCase()}` : ""}
                   </div>
+
                   <div><span className="font-semibold">Rareza:</span> {selectedCard.rarity}</div>
-                  <div><span className="font-semibold">Legalidades:</span> {Object.entries(selectedCard.legalities || {}).filter(([_, v]) => v === "legal").map(([k]) => k).join(", ") || "—"}</div>
+
                 </div>
 
                 <div className="text-sm whitespace-pre-wrap bg-gray-50 p-2 rounded">
@@ -558,14 +578,37 @@ export default function Catalogo() {
                   )}
                 </div>
 
-                {!showingPrintsByName && (
+
+                {/* Añadir al carrito desde el diálogo */}
+                <div className="mt-4">
                   <button
-                    className="mt-2 w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded"
-                    onClick={viewAllPrintsFromDialog}
+                    className="w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded cursor-pointer mt-10"
+                    onClick={async () => {
+                      try {
+                        await add(selectedCard, 1);
+                      } catch (err) {
+                        alert(err?.message || "Debes iniciar sesión para añadir al carrito.");
+                        console.error("Dialog add error:", err);
+                      }
+                    }}
+                    title="Añadir al carrito"
                   >
-                    Ver todos sus estilos
+                    Añadir al carrito ({(items.find(it => it.id === selectedCard.id)?.qty) || 0})
                   </button>
+                </div>
+
+
+                {!showingPrintsByName && (
+                  <div className="text-center mt-70">
+                    <button
+                      className="mt-2 w-50 py-2 bg-red-500 hover:bg-red-600 text-white rounded cursor-pointer"
+                      onClick={viewAllPrintsFromDialog}
+                    >
+                      Ver todos sus artes
+                    </button>
+                  </div>
                 )}
+
               </div>
             </div>
           </div>
