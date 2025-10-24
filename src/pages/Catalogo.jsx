@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "../context/CartContext";
 
+import ManaText from "../components/ManaText.jsx"; // ajusta la ruta si tu estructura difiere
+
+
 const SCRYFALL_API = "https://api.scryfall.com";
 
 export default function Catalogo() {
@@ -64,76 +67,17 @@ export default function Catalogo() {
     return "";
   };
 
-  // 👇 mapping de símbolo → ruta del icono (en /public)
-  const manaSrcs = {
-    T: "/mana/tap.png",
-    W: "/mana/W.jpg",
-    U: "/mana/U.png",
-    B: "/mana/B.jpg",
-    R: "/mana/R.jpg",
-    G: "/mana/G.jpg",
-    C: "/mana/C.png",
-    // opcionales:
-    Q: "/mana/untap.png",
-    S: "/mana/S.jpg",
-    X: "/mana/X.svg",
-  };
 
-
-  // 👇 helper: convierte texto con {T},{G}... en JSX con imágenes (respeta saltos de línea)
-  function renderWithSymbols(text) {
-    if (!text) return "";
-    const tokenRe = /\{([A-Z])\}/g; // sólo 1 letra: T,W,U,B,R,G,C
-    const parts = [];
-    let lastIndex = 0;
-    let m, key = 0;
-
-    const pushText = (str) => {
-      // respetar saltos de línea
-      const lines = str.split("\n");
-      lines.forEach((ln, i) => {
-        if (ln) parts.push(<span key={`t-${key++}`}>{ln}</span>);
-        if (i < lines.length - 1) parts.push(<br key={`br-${key++}`} />);
-      });
-    };
-
-    while ((m = tokenRe.exec(text)) !== null) {
-      // trozo previo
-      if (m.index > lastIndex) pushText(text.slice(lastIndex, m.index));
-
-      const sym = m[1]; // letra capturada
-      const src = manaSrcs[sym];
-      if (src) {
-        parts.push(
-          <img
-            key={`img-${key++}`}
-            src={src}
-            alt={`{${sym}}`}
-            className="inline-block h-4 align-text-bottom mx-0.5"
-            draggable={false}
-          />
-        );
-      } else {
-        // si no lo reconocemos, dejamos el token tal cual
-        parts.push(<span key={`unk-${key++}`}>{m[0]}</span>);
-      }
-      lastIndex = tokenRe.lastIndex;
-    }
-
-    // resto final
-    if (lastIndex < text.length) pushText(text.slice(lastIndex));
-    return <>{parts}</>;
-  }
 
   // 🔁 SUSTITUYE tu función por esta:
-  const getOracleText = (c) => {
-    let text = "";
-    if (c?.oracle_text) text = c.oracle_text;
-    else if (Array.isArray(c?.card_faces)) {
-      text = c.card_faces.map((f) => f.oracle_text).filter(Boolean).join("\n—\n");
-    }
-    return renderWithSymbols(text);
-  };
+const getOracleText = (c) => {
+  if (c?.oracle_text) return c.oracle_text;
+  if (Array.isArray(c?.card_faces)) {
+    return c.card_faces.map((f) => f.oracle_text).filter(Boolean).join("\n—\n");
+  }
+  return "";
+};
+
 
 
   // 🔎 Acepta:
@@ -536,6 +480,7 @@ export default function Catalogo() {
               <div className="md:w-1/2 p-4 space-y-2">
                 <div className="flex justify-between items-start gap-3">
                   <h2 className="text-xl font-bold">{selectedCard.name}</h2>
+
                   <button
                     className="text-gray-500 hover:text-gray-700 cursor-pointer text-2xl leading-none"
                     onClick={() => setOpenDialog(false)}
@@ -557,25 +502,8 @@ export default function Catalogo() {
 
                 </div>
 
-                <div className="text-sm whitespace-pre-wrap bg-gray-50 p-2 rounded">
-                  {getOracleText(selectedCard) || "Sin texto de reglas."}
-                </div>
-
-                <div className="text-xs text-gray-600 max-h-32 overflow-auto border-t pt-2">
-                  <div className="font-semibold mb-1">Rulings</div>
-                  {detailLoading ? (
-                    <div>Cargando rulings...</div>
-                  ) : selectedCardRulings.length ? (
-                    <ul className="list-disc ml-5 space-y-1">
-                      {selectedCardRulings.map((r) => (
-                        <li key={r.comment + r.published_at}>
-                          <span className="font-medium">{r.published_at}:</span> {r.comment}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div>Sin rulings.</div>
-                  )}
+                <div className="text-sm bg-gray-50 p-2 rounded">
+                  <ManaText text={getOracleText(selectedCard) || "Sin texto de reglas."} size="md" />
                 </div>
 
 

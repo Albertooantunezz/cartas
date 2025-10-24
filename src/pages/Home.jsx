@@ -1,8 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ProductList from "../features/products/ProductList";
 import Navbar from "../components/Navbar";
 import Opinion from "../components/Opinion";
 import { useCart } from "../context/CartContext";
+
+import { auth } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import ManaText from "../components/ManaText";
+
+
 
 const SCRYFALL_API = "https://api.scryfall.com";
 
@@ -35,14 +41,65 @@ async function fetchCardBySetNumber(set, number) {
   return res.json();
 }
 
+// Helpers de imagen y texto
+function getCardImage(c, size = "normal") {
+  try {
+    if (c.image_uris?.[size]) return c.image_uris[size];
+    if (Array.isArray(c.card_faces) && c.card_faces[0]?.image_uris?.[size]) {
+      return c.card_faces[0].image_uris[size];
+    }
+    if (c.image_uris?.small) return c.image_uris.small;
+    if (Array.isArray(c.card_faces) && c.card_faces[0]?.image_uris?.small) {
+      return c.card_faces[0].image_uris.small;
+    }
+  } catch { }
+  return "";
+}
+function getOracleText(c) {
+  if (c?.oracle_text) return c.oracle_text;
+  if (Array.isArray(c?.card_faces)) {
+    return c.card_faces.map((f) => f.oracle_text).filter(Boolean).join("\n—\n");
+  }
+  return "";
+}
+
 export default function Home() {
   const { add } = useCart();
+
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState(null); // { ok:number, fail:string[] }
 
+  // Resultado breve (se mantiene para mensajes fuera del diálogo si quieres)
+  const [result, setResult] = useState(null); // { mode:"preview"|"added", ok:number, fail:string[] }
+
+  // --- Pre-Add Dialog (previsualización antes de añadir) ---
+  const [preAddOpen, setPreAddOpen] = useState(false);
+  const [preAddCards, setPreAddCards] = useState([]); // [{ entry, card }] (entry tiene qty)
+  const [failedLines, setFailedLines] = useState([]); // string[]
+  const [preAddSaving, setPreAddSaving] = useState(false);
+
+  // Dialog de detalle
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [selectedCardRulings, setSelectedCardRulings] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => setUser(u || null));
+    return () => unsub();
+  }, []);
+
+
+  // Pequeño contador del carrito visible en el diálogo (opcional, si CartContext no lo provee)
+  const [localAdded, setLocalAdded] = useState({}); // id -> qty añadidas en esta sesión del diálogo
+
+  // Importar: ahora NO añade directamente. Previsualiza en un diálogo y muestra fallos dentro.
   const handleImport = async () => {
     setResult(null);
+    setFailedLines([]);
+    setPreAddCards([]);
+    setLocalAdded({});
 
     const lines = text
       .split(/\r?\n/)
@@ -50,6 +107,7 @@ export default function Home() {
       .filter((l) => l.length > 0 && !/^sideboard:?$/i.test(l)); // ignora "SIDEBOARD:"
 
     if (lines.length === 0) {
+      // mostramos feedback minimal fuera (o puedes abrir igualmente un diálogo vacío)
       setResult({ ok: 0, fail: ["Pega una lista primero."] });
       return;
     }
@@ -57,38 +115,38 @@ export default function Home() {
     setBusy(true);
     try {
       const parsedOk = [];
-      const failedLines = [];
+      const failed = [];
 
       // 1) Parseo
       for (const ln of lines) {
         const p = parseMoxfieldLine(ln);
-        if (!p) failedLines.push(ln);
+        if (!p) failed.push(ln);
         else parsedOk.push({ ...p, _line: ln });
       }
 
-      // 2) Resolución en Scryfall (validación, no añadimos aún)
+      // 2) Resolución en Scryfall (validación)
       const resolved = [];
       for (const entry of parsedOk) {
         try {
           const card = await fetchCardBySetNumber(entry.set, entry.number);
           resolved.push({ entry, card });
         } catch {
-          failedLines.push(entry._line);
+          failed.push(entry._line);
         }
       }
 
-      // 3) Si falló cualquiera → mostramos listado de fallos y NO añadimos nada
-      if (failedLines.length > 0) {
-        setResult({ ok: 0, fail: failedLines });
-        return;
-      }
+      // 3) Abrimos el diálogo SIEMPRE con las encontradas…
+      setPreAddCards(resolved);
+      setFailedLines(failed);
+      setPreAddOpen(true);
 
-      // 4) Todo OK → añadimos al carrito
-      for (const { entry, card } of resolved) {
-        await add(card, entry.qty);
-      }
+      // …y fuera mostramos un resumen rápido opcional
+      setResult({
+        mode: "preview",
+        ok: resolved.length,
+        fail: failed,
+      });
 
-      setResult({ ok: resolved.length, fail: [] });
     } catch (e) {
       console.error(e);
       setResult({ ok: 0, fail: ["Ha ocurrido un error inesperado."] });
@@ -97,6 +155,49 @@ export default function Home() {
     }
   };
 
+  // Guardar todas las cartas encontradas en carrito (respetando qty)
+  const saveAllToCart = async () => {
+    if (!preAddCards.length) {
+      setPreAddOpen(false);
+      return;
+    }
+    setPreAddSaving(true);
+    try {
+      for (const { entry, card } of preAddCards) {
+        if (!card?.id) continue;
+        const qty = Math.max(1, entry.qty || 1);
+        await add(card, qty);
+      }
+      // 🔴 Aquí dejamos claro el modo "added"
+      setResult({
+        mode: "added",
+        ok: preAddCards.length,
+        fail: failedLines || [],
+      });
+      setPreAddOpen(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPreAddSaving(false);
+    }
+  };
+
+
+  // Abrir detalle con rulings
+  const openCardDetail = async (card) => {
+    setSelectedCard(card);
+    setOpenDialog(true);
+    setDetailLoading(true);
+    setSelectedCardRulings([]);
+    try {
+      const r = await fetch(`${SCRYFALL_API}/cards/${card.id}/rulings`);
+      if (r.ok) {
+        const j = await r.json();
+        setSelectedCardRulings(j.data || []);
+      }
+    } catch { }
+    setDetailLoading(false);
+  };
 
   return (
     <div className="relative top-0 w-full flex flex-col items-center justify-center">
@@ -121,20 +222,20 @@ export default function Home() {
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-4 mt-10">
           <div className="bg-red-200 p-4 rounded-lg shadow">
-            <h3 className="font-bold mt-2 text-4xl">2€</h3>
-            <p>Una sola carta</p>
+            <h3 className="font-bold mt-2 text-4xl">2€ p/u</h3>
+            <p>8 cartas</p>
           </div>
           <div className="bg-red-200 p-4 rounded-lg shadow">
-            <h3 className="font-bold mt-2 text-4xl">1.5€</h3>
-            <p>+10 cartas</p>
+            <h3 className="font-bold mt-2 text-4xl">1.5€ p/u</h3>
+            <p>+8 cartas</p>
           </div>
           <div className="bg-red-200 p-4 rounded-lg shadow">
-            <h3 className="font-bold mt-2 text-4xl">1€</h3>
+            <h3 className="font-bold mt-2 text-4xl">1€ p/u</h3>
+            <p>+40 cartas</p>
+          </div>
+          <div className="bg-red-200 p-4 rounded-lg shadow">
+            <h3 className="font-bold mt-2 text-4xl">0.5€ p/u</h3>
             <p>+50 cartas</p>
-          </div>
-          <div className="bg-red-200 p-4 rounded-lg shadow">
-            <h3 className="font-bold mt-2 text-4xl">0.5€</h3>
-            <p>+100 cartas</p>
           </div>
         </div>
 
@@ -146,8 +247,7 @@ export default function Home() {
         <div className="mt-12 text-left">
           <h3 className="text-xl font-semibold mb-2">Importar lista (Moxfield)</h3>
           <p className="text-sm text-gray-700 mb-3">
-            Pega líneas en formato <code>1 Nombre (SET) Número</code>. Validamos todas primero; si alguna falla, no se
-            añadirá ninguna.
+            Pega líneas en formato <code>1 Nombre (SET) Número</code>. Previsualizamos y podrás guardar todas las que se encuentren; si alguna falla, verás el aviso dentro del diálogo.
           </p>
           <textarea
             className="w-full h-64 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400 font-mono text-sm"
@@ -161,7 +261,7 @@ export default function Home() {
               onClick={handleImport}
               disabled={busy || !text.trim()}
             >
-              {busy ? "Importando..." : "Añadir lista al carrito"}
+              {busy ? "Procesando..." : "Añadir lista al carrito"}
             </button>
             <button
               className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200"
@@ -177,20 +277,18 @@ export default function Home() {
 
           {result && (
             <div className="mt-3 text-sm space-y-2">
-              {result.ok > 0 && result.fail.length === 0 && (
+              {typeof result.ok === "number" && result.ok >= 0 && (
                 <div className="rounded-lg border border-green-200 bg-green-50 text-green-800 px-3 py-2">
-                  <b>Se han añadido correctamente {result.ok} carta{result.ok > 1 ? "s" : ""} a tu carrito.</b>
-                </div>
-              )}
-
-              {result.fail?.length > 0 && (
-                <div className="rounded-lg border border-red-200 bg-red-50 text-red-800 px-3 py-2">
-                  <b>No se han encontrado las siguientes cartas:</b>
-                  <ul className="list-disc ml-5 mt-1">
-                    {result.fail.map((f, i) => (
-                      <li key={i}>{f}</li>
-                    ))}
-                  </ul>
+                  <b>
+                    {result.mode === "added"
+                      ? `Se han añadido ${result.ok} carta${result.ok !== 1 ? "s" : ""} al carrito.`
+                      : `Se han previsualizado ${result.ok} carta${result.ok !== 1 ? "s" : ""}.`}
+                  </b>
+                  {result.fail?.length ? (
+                    <span className="ml-2 text-yellow-700">
+                      {result.fail.length} línea(s) no se encontraron; revísalas en el diálogo.
+                    </span>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -201,6 +299,144 @@ export default function Home() {
 
         <Opinion />
       </div>
-    </div>
+
+      {/* =======================
+          Dialogo: Previsualización
+         ======================= */}
+      {preAddOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setPreAddOpen(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl max-w-6xl w-full overflow-hidden">
+            <div className="px-4 py-3 border-b flex items-center justify-between">
+              <h3 className="text-lg font-semibold">
+                Previsualizar {preAddCards.reduce((sum, it) => sum + (it.entry?.qty || 1), 0)} carta(s)
+              </h3>
+              <button className="text-gray-500 hover:text-gray-700" onClick={() => setPreAddOpen(false)}>✕</button>
+            </div>
+
+            {/* Aviso de fallos: no bloquea el guardado */}
+            {(failedLines.length > 0) && (
+              <div className="px-4 pt-3">
+                <div className="rounded bg-yellow-50 text-yellow-800 border border-yellow-200 px-3 py-2 text-sm">
+                  No se encontraron {failedLines.length} línea(s):
+                  <ul className="list-disc ml-5 mt-1">
+                    {failedLines.slice(0, 6).map((ln, i) => <li key={i}>{ln}</li>)}
+                  </ul>
+                  {failedLines.length > 6 && <div className="mt-1">… y más.</div>}
+                </div>
+              </div>
+            )}
+
+            <div className="p-4">
+              {preAddCards.length === 0 ? (
+                <div className="text-sm text-gray-600">No hay cartas que mostrar.</div>
+              ) : (
+                <div className="max-h-[65vh] overflow-auto pr-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8 gap-3">
+                    {preAddCards.map(({ entry, card }) => {
+                      const img = getCardImage(card, "normal");
+                      return (
+                        <div
+                          key={card.id}
+                          onClick={() => openCardDetail(card)}   // click → detalle
+                          title="Ver detalles"
+                          className="relative group rounded-lg overflow-hidden shadow hover:shadow-md cursor-pointer"
+                          style={{
+                            height: "180px",
+                            backgroundImage: img ? `url(${img})` : "none",
+                            backgroundSize: "contain",
+                            backgroundRepeat: "no-repeat",
+                            backgroundPosition: "center",
+                            backgroundColor: img ? "transparent" : "#e5e7eb",
+                          }}
+                        >
+                          {!img && (
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+                              Sin imagen
+                            </div>
+                          )}
+
+                          {/* Badge con cantidad (SIN botones) */}
+                          <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                            x{entry.qty || 1}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+            <div className="px-4 py-3 border-t flex items-center justify-end gap-2">
+              {!user && (
+                <div
+                  className="mr-auto text-sm text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1"
+                  aria-live="polite"
+                >
+                  Debes haber iniciado sesión para guardarlas.
+                </div>
+              )}
+              <button className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-black" onClick={() => setPreAddOpen(false)}>
+                Cancelar
+              </button>
+              <button
+                className="px-3 py-2 rounded bg-red-500 hover:bg-red-600 text-white disabled:opacity-60"
+                onClick={saveAllToCart}
+                disabled={preAddSaving || preAddCards.length === 0 || !user}
+              >
+                {preAddSaving ? "Guardando…" : "Guardar todas en carrito"}
+              </button>
+
+
+            </div>
+          </div>
+        </div >
+      )
+      }
+
+
+
+      {/* =======================
+          Dialogo: Detalle de carta
+         ======================= */}
+      {
+        openDialog && selectedCard && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 text-black">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setOpenDialog(false)} />
+            <div className="relative bg-white rounded-xl shadow-xl max-w-4xl w-full overflow-hidden">
+              <div className="flex flex-col md:flex-row">
+                <div className="md:w-1/2 bg-gray-50 flex items-center justify-center p-3">
+                  <img
+                    src={getCardImage(selectedCard, "large") || getCardImage(selectedCard, "normal")}
+                    alt={selectedCard.name}
+                    className="w-full h-[520px] object-contain"
+                  />
+                </div>
+                <div className="md:w-1/2 p-4 space-y-2">
+                  <div className="flex justify-between items-start gap-3">
+                    <h2 className="text-xl font-bold">{selectedCard.name}</h2>
+                    <button className="text-gray-500 hover:text-gray-700" onClick={() => setOpenDialog(false)} aria-label="Cerrar">✕</button>
+                  </div>
+
+                  <div className="text-sm text-gray-700">
+                    <div><span className="font-semibold">Set:</span> {selectedCard.set_name} ({selectedCard.set?.toUpperCase()}) • #{selectedCard.collector_number}</div>
+                    <div><span className="font-semibold">Rareza:</span> {selectedCard.rarity}</div>
+                    <div><span className="font-semibold">Legalidades:</span> {Object.entries(selectedCard.legalities || {}).filter(([_, v]) => v === "legal").map(([k]) => k).join(", ") || "—"}</div>
+                  </div>
+
+                  <div className="text-sm bg-gray-50 p-2 rounded">
+                    <ManaText text={getOracleText(selectedCard) || "Sin texto de reglas."} size="md" />
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+    </div >
   );
 }
