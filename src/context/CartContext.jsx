@@ -6,19 +6,22 @@ import {
   doc,
   onSnapshot,
   setDoc,
+  getDoc,
   deleteDoc,
   serverTimestamp,
   writeBatch,
   increment,
+  query,
+  orderBy,
 } from "firebase/firestore";
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([]);        // [{id, name, image, eur/usd, qty, ...}]
+  const [items, setItems] = useState([]); // [{ id, name, image, eur/usd, qty, ... , createdAt }]
   const [ready, setReady] = useState(false);
 
-  // Suscripción al carrito del usuario
+  // Suscripción al carrito del usuario (ORDENADA)
   useEffect(() => {
     const unsubAuth = auth.onAuthStateChanged((u) => {
       setReady(false);
@@ -28,12 +31,17 @@ export function CartProvider({ children }) {
         return;
       }
       const cartCol = collection(db, "users", u.uid, "cart");
-      const unsubCart = onSnapshot(cartCol, (snap) => {
+      // 👇 MUY IMPORTANTE: ordenar por createdAt para mantener orden de inserción
+      const qCart = query(cartCol, orderBy("createdAt", "asc"));
+
+
+      const unsubCart = onSnapshot(qCart, (snap) => {
         const list = [];
         snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
         setItems(list);
         setReady(true);
       });
+
       return () => unsubCart();
     });
     return () => unsubAuth();
@@ -47,27 +55,57 @@ export function CartProvider({ children }) {
     }, 0);
   }, [items]);
 
-  // Añadir +1 (o qty) del producto (card) al carrito
+  // Añadir (respetando createdAt si ya existe)
   async function add(card, qty = 1) {
     const u = auth.currentUser;
     if (!u) throw new Error("Debes iniciar sesión para añadir al carrito.");
-    const ref = doc(db, "users", u.uid, "cart", card.id); // usamos id de scryfall como docId
+    const ref = doc(db, "users", u.uid, "cart", card.id);
+
     const payload = {
       name: card.name,
-      image: (card.image_uris?.normal) ||
-             (card.card_faces?.[0]?.image_uris?.normal) || "",
-      eur: card.prices?.eur || null,
-      usd: card.prices?.usd || null,
-      set: card.set?.toUpperCase(),
+      image:
+        card.image_uris?.normal ||
+        card.card_faces?.[0]?.image_uris?.normal ||
+        "",
+      eur: card.prices?.eur ?? null,
+      usd: card.prices?.usd ?? null,
+      set: (card.set || "").toUpperCase(),
       set_name: card.set_name,
       collector_number: card.collector_number,
       updatedAt: serverTimestamp(),
     };
-    // Si no existe, crea con qty inicial; si existe, incrementa
-    await setDoc(ref, { ...payload, qty: increment(qty), createdAt: serverTimestamp() }, { merge: true });
+
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      // Ya existe: NO tocar createdAt, solo incrementar qty y updatedAt
+      await setDoc(
+        ref,
+        { ...payload, qty: increment(qty) },
+        { merge: true }
+      );
+    } else {
+      // Nuevo doc: fija createdAt UNA sola vez
+      await setDoc(ref, {
+        ...payload,
+        qty: qty,
+        createdAt: serverTimestamp(),
+      });
+    }
   }
 
-  // Quitar 1
+  // Establecer cantidad exacta (sin borrar/recrear)
+  async function setQty(cardId, qty) {
+    const u = auth.currentUser;
+    if (!u) throw new Error("Debes iniciar sesión.");
+    const ref = doc(db, "users", u.uid, "cart", cardId);
+    if (qty <= 0) {
+      await deleteDoc(ref);
+      return;
+    }
+    await setDoc(ref, { qty, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  // Quitar 1 (sin re-crear)
   async function removeOne(cardId) {
     const u = auth.currentUser;
     if (!u) throw new Error("Debes iniciar sesión.");
@@ -100,7 +138,19 @@ export function CartProvider({ children }) {
     await batch.commit();
   }
 
-  const value = { items, ready, totalQty, totalEUR, add, removeOne, removeItem, clearCart };
+  const value = {
+    items,
+    ready,
+    totalQty,
+    totalEUR,
+    add,
+    // API cómoda para el UI:
+    setQty,          // 👈 ahora existe; úsalo en el componente para +/-
+    removeOne,       // quitar 1
+    removeItem,      // quitar del todo
+    clearCart,
+  };
+
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 

@@ -17,6 +17,7 @@
     "@supabase/supabase-js": "^2.57.4",
     "@tailwindcss/vite": "^4.1.13",
     "bootstrap": "^5.3.8",
+    "cors": "^2.8.5",
     "embla-carousel": "^8.6.0",
     "firebase": "^12.4.0",
     "framer-motion": "^12.23.22",
@@ -25,6 +26,7 @@
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1",
     "slick-carousel": "^1.8.1",
+    "stripe": "^19.2.0",
     "tailwindcss": "^4.1.13"
   },
   "devDependencies": {

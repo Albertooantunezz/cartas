@@ -16,7 +16,7 @@ function getCardImage(c, size = "normal") {
     if (Array.isArray(c?.card_faces) && c.card_faces[0]?.image_uris?.small) {
       return c.card_faces[0].image_uris.small;
     }
-  } catch {}
+  } catch { }
   return "";
 }
 
@@ -39,6 +39,13 @@ export default function Carrito() {
 
   const items = cartCtx.items ?? cartCtx.cartItems ?? cartCtx.cart ?? [];
 
+  // Mantiene "pegado" el nuevo id durante un instante tras el replace
+  const [lastSwap, setLastSwap] = useState(null); // { newId: string, ts: number }
+  // Mantiene posición mientras se actualiza cantidad
+  const [lastQtyUpdate, setLastQtyUpdate] = useState(null); // { id, ts }
+
+
+
   // ---------- Normalización de items ----------
   const baseItems = useMemo(() => {
     if (Array.isArray(items)) return items;
@@ -60,6 +67,28 @@ export default function Carrito() {
     }
     return [];
   }, [items]);
+
+  // Mapa que memoriza el orden visual en el que se añadieron las cartas
+  const [visualOrderMap, setVisualOrderMap] = useState({});
+
+  useEffect(() => {
+    setVisualOrderMap((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      for (let i = 0; i < baseItems.length; i++) {
+        const id = baseItems[i]?.card?.id || getCardIdFromItem(baseItems[i]);
+        if (id && !(id in next)) {
+          next[id] = Object.keys(next).length; // fija posición incremental una sola vez
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [baseItems]);
+
+
+
 
   // ---------- Autocarga de cartas por ID ----------
   const [loadedCards, setLoadedCards] = useState({}); // id -> card
@@ -89,20 +118,29 @@ export default function Carrito() {
     fetchMissingCards();
   }, [baseItems, loadedCards]);
 
+
+
   // ---------- ORDEN ESTABLE ----------
   const [orderIds, setOrderIds] = useState([]); // ids en orden de inserción
   useEffect(() => {
     const currentIds = baseItems.map(getCardIdFromItem).filter(Boolean);
+
     setOrderIds((prev) => {
-      // añade nuevos al final
-      const next = [...prev];
-      for (const id of currentIds) {
-        if (!next.includes(id)) next.push(id);
-      }
-      // elimina los que ya no están (p.ej. tras vaciar o borrar)
-      return next.filter((id) => currentIds.includes(id));
+      // Copiamos los ids previos que siguen existiendo
+      const keep = prev.filter((id) => currentIds.includes(id));
+
+      // Añadimos los nuevos (sin duplicar)
+      const newOnes = currentIds.filter((id) => !keep.includes(id));
+
+      // 🔥 Fix: mantener el orden exacto en el que ya estaban, sin recolocar nada
+      // Si una carta se elimina, simplemente desaparece, pero las demás NO cambian de posición
+      // Si una carta cambia de qty, no afecta al orden
+      return [...keep, ...newOnes];
     });
   }, [baseItems]);
+
+
+
 
   // ---------- Wrappers y estados de UX ----------
   const [optimisticQty, setOptimisticQty] = useState({}); // id -> qty mostrada mientras actualiza
@@ -116,9 +154,21 @@ export default function Carrito() {
     try {
       await remove(id);
     } catch {
-      try { await remove(cardOrId); } catch {}
+      try { await remove(cardOrId); } catch { }
     }
+    // Mantiene el resto del orden sin cambios
+    setOrderIds((prev) => prev.filter((x) => x !== id));
+
+    setVisualOrderMap((prev) => {
+      if (!id || !(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+
   };
+
+
 
   // Cambio de cantidad sin parpadeos: optimista. Evita quitar/añadir salvo caso extremo.
   const changeQty = async (card, delta, currentQty) => {
@@ -128,6 +178,8 @@ export default function Carrito() {
 
     // Pintado optimista
     setOptimisticQty((p) => ({ ...p, [id]: nextQty }));
+    setLastQtyUpdate({ id, ts: Date.now() });
+
 
     try {
       if (setQty) {
@@ -170,7 +222,7 @@ export default function Carrito() {
     setSnapshotItems(orderedItems); // lo que se ve ahora se queda congelado
     setIsClearing(true);
     try {
-      try { await clear?.(); } catch {}
+      try { await clear?.(); } catch { }
       const ids = baseItems.map(getCardIdFromItem).filter(Boolean);
       await Promise.all(ids.map((id) => removeSafe(id))); // en paralelo
       setOrderIds([]); // resetea orden
@@ -226,7 +278,7 @@ export default function Carrito() {
   const unitPrice = useMemo(() => {
     if (totalUnits >= 50) return 0.75;
     if (totalUnits >= 40) return 1.0;
-    if (totalUnits >= 20) return 1.5;
+    if (totalUnits >= 9) return 1.5;
     return 2.0;
   }, [totalUnits]);
 
@@ -255,7 +307,7 @@ export default function Carrito() {
           card = await res.json();
           setLoadedCards((prev) => ({ ...prev, [idGuess]: card }));
         }
-      } catch {}
+      } catch { }
     }
 
     if (!card?.oracle_id) {
@@ -301,27 +353,38 @@ export default function Carrito() {
     }
   };
 
-  // Reemplazar carta manteniendo posición
   const replaceCartItemWithPrint = async (newCard) => {
     if (!printsCard?.card?.id || !newCard?.id) return;
     const oldCard = printsCard.card;
     const qty = printsCard.qty || 1;
     try {
-      // Mantener orden: sustituye el id en orderIds antes de tocar el carrito
+      // Reemplaza el id en el mismo índice del array sin alterar el resto
       setOrderIds((prev) => {
-        const i = prev.indexOf(oldCard.id);
-        if (i === -1) return prev;
         const next = [...prev];
-        next[i] = newCard.id;
+        const i = next.indexOf(oldCard.id);
+        if (i !== -1) next[i] = newCard.id;
         return next;
       });
 
-      // Reemplazo real
+      setVisualOrderMap((prev) => {
+        const pos = prev[oldCard.id];
+        if (pos === undefined) return prev;
+        const next = { ...prev };
+        delete next[oldCard.id];
+        next[newCard.id] = pos; // misma posición para el nuevo id
+        return next;
+      });
+
+
+      setLastSwap({ newId: newCard.id, ts: Date.now() });
+
+
+      // Actualiza la carta real del carrito
       if (setQty) {
         await setQty(oldCard.id, 0);
         await add?.(newCard, qty);
       } else {
-        await remove?.(oldCard.id);
+        await removeSafe(oldCard.id);
         await add?.(newCard, qty);
       }
 
@@ -332,11 +395,13 @@ export default function Carrito() {
     }
   };
 
+
+
   return (
     <div className="min-h-screen bg-red-50 p-4">
       <div className="mx-auto max-w-7xl">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Carrito</h1>
+          <h1 className="text-2xl font-bold text-black">Carrito</h1>
           <div className="flex items-center gap-2">
             {orderedItems.length > 0 && (
               <button
@@ -349,7 +414,7 @@ export default function Carrito() {
             )}
             <button
               className="px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-60"
-              onClick={() => {/* TODO: implementar pedido */}}
+              onClick={() => {/* TODO: implementar pedido */ }}
               disabled={orderedItems.length === 0 || isClearing}
             >
               Hacer el pedido
@@ -358,7 +423,7 @@ export default function Carrito() {
         </div>
 
         {/* Filtros */}
-        <form className="mb-4 rounded-xl border border-gray-200 bg-white shadow-sm px-4 py-3" onSubmit={(e)=>e.preventDefault()}>
+        <form className="mb-4 rounded-xl border border-gray-200 bg-white shadow-sm px-4 py-3" onSubmit={(e) => e.preventDefault()}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-2">
               <label className="block text-xs font-medium text-gray-700 mb-1">Buscar en el carrito</label>
@@ -387,99 +452,106 @@ export default function Carrito() {
               <div className="text-sm text-gray-600 p-4">No hay cartas que coincidan con el filtro.</div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                {filteredItems.map((it) => {
-                  const idGuess = it._idGuess || (it.card?.id ?? it.id);
-                  let { card, qty } = it;
-                  if ((!card || !card.name) && idGuess && loadedCards[idGuess]) {
-                    card = loadedCards[idGuess];
-                  }
+                {[...filteredItems]
+                  .sort((a, b) => {
+                    const idA = a.card?.id;
+                    const idB = b.card?.id;
+                    return (visualOrderMap[idA] ?? 0) - (visualOrderMap[idB] ?? 0);
+                  })
+                  .map((it) => {
 
-                  if (!card || !card.id) {
-                    return (
-                      <div key={idGuess || Math.random()} className="relative rounded-lg overflow-hidden shadow bg-white border border-gray-200">
-                        <div className="w-full h-[200px] bg-gray-200 flex items-center justify-center text-gray-500">
-                          Cargando datos…
-                        </div>
-                        <div className="px-2 py-1 text-xs text-gray-600">ID: {idGuess || "—"}</div>
-                      </div>
-                    );
-                  }
+                    const idGuess = it._idGuess || (it.card?.id ?? it.id);
+                    let { card, qty } = it;
+                    if ((!card || !card.name) && idGuess && loadedCards[idGuess]) {
+                      card = loadedCards[idGuess];
+                    }
 
-                  const displayQty = optimisticQty[card.id] ?? qty;
-                  const img = getCardImage(card, "normal");
-
-                  return (
-                    <div
-                      key={card.id || `${card.oracle_id}-fallback`}
-                      className="relative group rounded-lg overflow-hidden shadow hover:shadow-md bg-white border border-gray-200"
-                    >
-                      {/* Imagen clickable → abre estilos */}
-                      <button
-                        className="block w-full"
-                        onClick={() => openPrintsFor(it)}
-                        title="Ver estilos (impresiones)"
-                        disabled={isClearing}
-                      >
-                        {img ? (
-                          <img
-                            src={img}
-                            alt={card?.name || "Carta"}
-                            className="w-full h-[200px] object-contain p-2 bg-gray-50"
-                            loading="lazy"
-                          />
-                        ) : (
+                    if (!card || !card.id) {
+                      return (
+                        <div key={idGuess || Math.random()} className="relative rounded-lg overflow-hidden shadow bg-white border border-gray-200">
                           <div className="w-full h-[200px] bg-gray-200 flex items-center justify-center text-gray-500">
-                            Sin imagen
+                            Cargando datos…
                           </div>
-                        )}
-                      </button>
+                          <div className="px-2 py-1 text-xs text-gray-600">ID: {idGuess || "—"}</div>
+                        </div>
+                      );
+                    }
 
-                      {/* Info corta */}
-                      <div className="px-2 py-1">
-                        <div className="text-xs text-gray-700 font-medium truncate" title={card?.name || ""}>
-                          {card?.name || "—"}
-                        </div>
-                        <div
-                          className="text-[11px] text-gray-500 truncate"
-                          title={`${card.set_name} (${card.set?.toUpperCase()}) #${card.collector_number}`}
-                        >
-                          {card.set_name} ({card.set?.toUpperCase()}) · #{card.collector_number}
-                        </div>
-                      </div>
+                    const displayQty = optimisticQty[card.id] ?? qty;
+                    const img = getCardImage(card, "normal");
 
-                      {/* Controles de cantidad y eliminar */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white px-2 py-1 flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          <button
-                            className="px-2 py-0.5 bg-white/20 rounded hover:bg-white/30"
-                            onClick={() => changeQty(card, -1, qty)}
-                            title="Quitar 1"
-                            disabled={isClearing}
-                          >
-                            −
-                          </button>
-                          <span className="w-7 text-center text-sm">{displayQty || 0}</span>
-                          <button
-                            className="px-2 py-0.5 bg-white/20 rounded hover:bg-white/30"
-                            onClick={() => changeQty(card, +1, qty)}
-                            title="Añadir 1"
-                            disabled={isClearing}
-                          >
-                            +
-                          </button>
-                        </div>
+                    return (
+                      <div
+                        key={card.id || `${card.oracle_id}-fallback`}
+                        className="relative group rounded-lg overflow-hidden shadow hover:shadow-md bg-white border border-gray-200"
+                      >
+                        {/* Imagen clickable → abre estilos */}
                         <button
-                          className="px-2 py-1 bg-red-500 hover:bg-red-600 rounded text-xs"
-                          onClick={() => remove?.(card.id)}
-                          title="Eliminar del carrito"
+                          className="block w-full"
+                          onClick={() => openPrintsFor(it)}
+                          title="Ver estilos (impresiones)"
                           disabled={isClearing}
                         >
-                          Eliminar
+                          {img ? (
+                            <img
+                              src={img}
+                              alt={card?.name || "Carta"}
+                              className="w-full h-[200px] object-contain p-2 bg-gray-50"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-[200px] bg-gray-200 flex items-center justify-center text-gray-500">
+                              Sin imagen
+                            </div>
+                          )}
                         </button>
+
+                        {/* Info corta */}
+                        <div className="px-2 py-1">
+                          <div className="text-xs text-gray-700 font-medium truncate" title={card?.name || ""}>
+                            {card?.name || "—"}
+                          </div>
+                          <div
+                            className="text-[11px] text-gray-500 truncate"
+                            title={`${card.set_name} (${card.set?.toUpperCase()}) #${card.collector_number}`}
+                          >
+                            {card.set_name} ({card.set?.toUpperCase()}) · #{card.collector_number}
+                          </div>
+                        </div>
+
+                        {/* Controles de cantidad y eliminar */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white px-2 py-1 flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <button
+                              className="px-2 py-0.5 bg-white/20 rounded hover:bg-white/30"
+                              onClick={() => changeQty(card, -1, qty)}
+                              title="Quitar 1"
+                              disabled={isClearing}
+                            >
+                              −
+                            </button>
+                            <span className="w-7 text-center text-sm">{displayQty || 0}</span>
+                            <button
+                              className="px-2 py-0.5 bg-white/20 rounded hover:bg-white/30"
+                              onClick={() => changeQty(card, +1, qty)}
+                              title="Añadir 1"
+                              disabled={isClearing}
+                            >
+                              +
+                            </button>
+                          </div>
+                          <button
+                            className="px-2 py-1 bg-red-500 hover:bg-red-600 rounded text-xs"
+                            onClick={() => remove?.(card.id)}
+                            title="Eliminar del carrito"
+                            disabled={isClearing}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             )}
           </div>
