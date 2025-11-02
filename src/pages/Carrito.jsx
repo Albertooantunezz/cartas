@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useCart } from "../context/CartContext";
 import ManaText from "../components/ManaText";
+import { getAuth } from "firebase/auth"; // ya usas auth en otras vistas
+
 
 const SCRYFALL_API = "https://api.scryfall.com";
 
@@ -414,7 +416,41 @@ export default function Carrito() {
             )}
             <button
               className="px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-60"
-              onClick={() => {/* TODO: implementar pedido */ }}
+              onClick={async () => {
+                try {
+                  const auth = getAuth();
+                  const u = auth.currentUser;
+                  if (!u) {
+                    alert("Inicia sesión para continuar.");
+                    return;
+                  }
+                  const idToken = await u.getIdToken();
+
+                  const resp = await fetch("/api/create-checkout-session", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${idToken}`,
+                    },
+                    body: JSON.stringify({}),
+                  });
+
+                  // lee como texto primero (por si viene HTML)
+                  const text = await resp.text();
+                  let data = {};
+                  try { data = text ? JSON.parse(text) : {}; } catch { }
+
+                  if (resp.ok && data.url) {
+                    window.location.href = data.url;
+                  } else {
+                    alert(data.error || `No se pudo iniciar el Checkout (HTTP ${resp.status})`);
+                  }
+
+                } catch (e) {
+                  console.error(e);
+                  alert("Ocurrió un error al iniciar el pago.");
+                }
+              }}
               disabled={orderedItems.length === 0 || isClearing}
             >
               Hacer el pedido
