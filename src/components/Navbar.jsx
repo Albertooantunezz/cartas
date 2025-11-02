@@ -64,7 +64,7 @@ export default function Navbar() {
     return (
         <nav className={`${baseClasses} ${positionClass} ${bgClass}`}>
             <div className="flex relative w-full justify-between items-center h-15">
-                <h1 className="text-2xl font-bold font-Modak absolute "><a href="/">NVPROXIS</a></h1>
+                <h1 className="text-2xl font-bold font-Modak absolute "><a href="/">NVPROXY</a></h1>
                 <div className=" justify-center items-center text-center flex w-full hidden sm:flex gap-4">
 
 

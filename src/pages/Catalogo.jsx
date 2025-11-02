@@ -215,10 +215,16 @@ const getOracleText = (c) => {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
+  // Si hay una búsqueda pendiente, la cancelamos
+  const handler = setTimeout(() => {
     fetchInitial();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, codeQuery, computedQuery]);
+  }, 400); // 400 ms de espera desde la última tecla
+
+  return () => clearTimeout(handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [name, codeQuery, computedQuery]);
+
 
   // Detalle
   const openCardDetail = async (card) => {
