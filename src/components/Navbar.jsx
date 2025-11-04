@@ -58,25 +58,25 @@ export default function Navbar() {
     // - Home: cambia con scroll (transparente ↔ rojo)
     // - Resto: siempre rojo
     const bgClass = isHome
-        ? (scrolled ? "bg-red-600" : "bg-transparent")
-        : "bg-red-600";
+        ? (scrolled ? "bg-[#141414]" : "bg-transparent")
+        : "bg-[#141414]";
 
     return (
         <nav className={`${baseClasses} ${positionClass} ${bgClass}`}>
             <div className="flex relative w-full justify-between items-center h-15">
-                <h1 className="text-2xl font-bold font-Modak absolute "><a href="/">NVPROXY</a></h1>
+                <h1 className="text-2xl font-bold font-Modak absolute "><a href="/"><img src="logoMenu.png" alt="" className="h-10" /></a></h1>
                 <div className=" justify-center items-center text-center flex w-full hidden sm:flex gap-4">
 
 
                     <a href="/catalogo" className="text-xl text-white
                 transition-colors duration-200 ease-out
-             hover:text-gray-400 w-30">Catálogo</a>
+             hover:text-[#07ff00] w-30">Catálogo</a>
 
-             <span className="text-2xl"> | </span>
+                    <span className="text-2xl"> | </span>
 
                     <a href="/catalogo" className="text-xl text-white
                 transition-colors duration-200 ease-out
-             hover:text-gray-400 w-30">Mazo</a>
+             hover:text-[#07ff00] w-30">Mazo</a>
 
                 </div>
 
@@ -92,7 +92,7 @@ export default function Navbar() {
                         href="/carrito"
                         className="text-2xl inline-flex h-6 w-6 items-center justify-center text-white
                transition-transform transition-colors duration-200 ease-out
-               hover:scale-110 hover:text-red-400"
+               hover:scale-110 hover:text-[#07ff00]"
                     >
                         <FontAwesomeIcon icon={faCartShopping} />
                     </a>
@@ -101,7 +101,7 @@ export default function Navbar() {
                         href="/cuenta"
                         className="text-2xl inline-flex h-6 w-6 items-center justify-center text-white
                transition-transform transition-colors duration-200 ease-out
-               hover:scale-110 hover:text-red-400"
+               hover:scale-110 hover:text-[#07ff00]"
                     >
                         <FontAwesomeIcon icon={faUser} />
                     </a>

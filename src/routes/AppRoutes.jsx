@@ -7,6 +7,8 @@ import React from "react";
 import Footer from "../components/Footer";
 import Catalogo from "../pages/Catalogo";
 import Cuenta from "../pages/Cuenta";
+import CheckoutSuccess from "../pages/CheckoutSuccess";
+import CheckoutCancel from "../pages/CheckoutCancel";
 
 export default function AppRoutes() {
   return (
@@ -18,8 +20,17 @@ export default function AppRoutes() {
         <Route path="/catalogo" element={<Catalogo />} />
         <Route path="/cuenta" element={<Cuenta />} />
         <Route path="*" element={<NotFound />} />
+
+        {/* ✅ rutas nuevas para Stripe */}
+        <Route path="/checkout/success" element={<CheckoutSuccess />} />
+        <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+
+        {/* rutas antiguas opcionales si ya estaban en uso */}
+        <Route path="/checkout-success" element={<CheckoutSuccess />} />
+        <Route path="/checkout-cancel" element={<CheckoutCancel />} />
+
       </Routes>
-       <Footer />
+      <Footer />
     </BrowserRouter>
   );
 }

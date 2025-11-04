@@ -95,6 +95,8 @@ export default function Carrito() {
   // ---------- Autocarga de cartas por ID ----------
   const [loadedCards, setLoadedCards] = useState({}); // id -> card
 
+  const [isPaying, setIsPaying] = useState(false);
+
   useEffect(() => {
     const fetchMissingCards = async () => {
       const toLoad = [];
@@ -417,11 +419,30 @@ export default function Carrito() {
             <button
               className="px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-60"
               onClick={async () => {
+                if (isPaying) return;
+
+                setIsPaying(true);
+
+                // Abre la ventana YA para evitar bloqueadores y dar feedback inmediato
+                const checkoutWin = window.open("", "_blank");
+                if (checkoutWin) {
+                  checkoutWin.document.title = "Preparando pago…";
+                  checkoutWin.document.body.innerHTML = `
+        <div style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh">
+          <div>
+            <h1 style="font-size:20px;margin:0 0 8px">Preparando pago…</h1>
+            <p style="color:#555;margin:0">Un momento, por favor.</p>
+          </div>
+        </div>`;
+                }
+
                 try {
                   const auth = getAuth();
                   const u = auth.currentUser;
                   if (!u) {
                     alert("Inicia sesión para continuar.");
+                    if (checkoutWin) checkoutWin.close();
+                    setIsPaying(false);
                     return;
                   }
                   const idToken = await u.getIdToken();
@@ -441,20 +462,50 @@ export default function Carrito() {
                   try { data = text ? JSON.parse(text) : {}; } catch { }
 
                   if (resp.ok && data.url) {
-                    window.location.href = data.url;
+                    // redirige la nueva pestaña a Stripe
+                    if (checkoutWin) {
+                      checkoutWin.location.href = data.url;
+                    } else {
+                      // si el popup fue bloqueado, redirige la pestaña actual
+                      window.location.href = data.url;
+                    }
                   } else {
-                    alert(data.error || `No se pudo iniciar el Checkout (HTTP ${resp.status})`);
+                    const msg = data.error || `No se pudo iniciar el Checkout (HTTP ${resp.status})`;
+                    if (checkoutWin) {
+                      checkoutWin.document.body.innerHTML = `
+            <div style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh">
+              <div>
+                <h1 style="font-size:20px;margin:0 0 8px">No se pudo iniciar el pago</h1>
+                <p style="color:#b00;margin:0">${msg}</p>
+              </div>
+            </div>`;
+                      // cierra tras unos segundos
+                      setTimeout(() => checkoutWin.close(), 2500);
+                    }
+                    alert(msg);
+                    setIsPaying(false);
                   }
-
                 } catch (e) {
                   console.error(e);
+                  if (checkoutWin) {
+                    checkoutWin.document.body.innerHTML = `
+          <div style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh">
+            <div>
+              <h1 style="font-size:20px;margin:0 0 8px">Error inesperado</h1>
+              <p style="color:#b00;margin:0">${String(e?.message || e)}</p>
+            </div>
+          </div>`;
+                    setTimeout(() => checkoutWin.close(), 2500);
+                  }
                   alert("Ocurrió un error al iniciar el pago.");
+                  setIsPaying(false);
                 }
               }}
-              disabled={orderedItems.length === 0 || isClearing}
+              disabled={isPaying || orderedItems.length === 0 || isClearing}
             >
-              Hacer el pedido
+              {isPaying ? "Redirigiendo…" : "Hacer el pedido"}
             </button>
+
           </div>
         </div>
 

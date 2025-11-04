@@ -204,16 +204,18 @@ export default function Home() {
       <div className="relative">
         <img src="/banner.jpg" alt="Banner Home" className="w-2000 h-140 object-cover opacity-70" />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white  w-full  text-center">
-          <h2 className="text-3xl font-bold">¡Compra tu mazo!</h2>
-          <button className="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 mt-5 w-50">
-            <a href="/ofertas">Mazos</a>
-          </button>
+          <h2 className="text-3xl font-bold">¡Explora nuestro catálogo!</h2>
+          <a href="/catalogo">
+            <button className="bg-[#07ff00] text-white px-4 py-2 rounded-xl hover:bg-[#0cd806] mt-5 w-50 cursor-pointer">
+              Catálogo
+            </button>
+          </a>
         </div>
       </div>
 
-      <div className="text-center bg-red-100 w-full p-10 shadow-lg text-black md:px-20 lg:px-60">
+      <div className="text-center bg-black-800 w-full p-10 shadow-lg text-white md:px-20 lg:px-60">
         <h2 className="text-2xl font-bold ">Bienvenido a la tienda</h2>
-        <span className="w-full bg-red-500 h-1 block mt-5 rounded-xl"></span>
+        <span className="w-full bg-[#07ff00] h-1 block mt-5 rounded-xl"></span>
         <p className="lg:text-xl mt-10">
           Lorem ipsum dolor sit amet consectetur adipisicing elit. Provident pariatur iure officia alias quam impedit
           excepturi qui necessitatibus. Accusantium magni quasi rem voluptates provident repellat iste commodi laborum?
@@ -221,50 +223,46 @@ export default function Home() {
         </p>
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-4 mt-10">
-          <div className="bg-red-200 p-4 rounded-lg shadow">
+          <div className="bg-[#07ff00] p-4 rounded-lg shadow">
             <h3 className="font-bold mt-2 text-4xl">2€ p/u</h3>
             <p>8 cartas</p>
           </div>
-          <div className="bg-red-200 p-4 rounded-lg shadow">
+          <div className="bg-[#07ff00] p-4 rounded-lg shadow">
             <h3 className="font-bold mt-2 text-4xl">1.5€ p/u</h3>
             <p>+8 cartas</p>
           </div>
-          <div className="bg-red-200 p-4 rounded-lg shadow">
+          <div className="bg-[#07ff00] p-4 rounded-lg shadow">
             <h3 className="font-bold mt-2 text-4xl">1€ p/u</h3>
             <p>+40 cartas</p>
           </div>
-          <div className="bg-red-200 p-4 rounded-lg shadow">
+          <div className="bg-[#07ff00] p-4 rounded-lg shadow">
             <h3 className="font-bold mt-2 text-4xl">0.5€ p/u</h3>
             <p>+50 cartas</p>
           </div>
         </div>
 
-        <button className="text-xl bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 mt-10 w-50">
-          <a href="/catalogo">Catálogo</a>
-        </button>
-
         {/* ---------- Importador Moxfield ---------- */}
         <div className="mt-12 text-left">
           <h3 className="text-xl font-semibold mb-2">Importar lista (Moxfield)</h3>
-          <p className="text-sm text-gray-700 mb-3">
+          <p className="text-sm text-white mb-3">
             Pega líneas en formato <code>1 Nombre (SET) Número</code>. Previsualizamos y podrás guardar todas las que se encuentren; si alguna falla, verás el aviso dentro del diálogo.
           </p>
           <textarea
-            className="w-full h-64 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400 font-mono text-sm"
+            className="w-full h-64 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#07ff00] font-mono text-sm"
             placeholder={`1 Ancient Tomb (VMA) 289\n1 Haunted Ridge (MID) 263 F\n1 Urza's Saga (MH2) 259\n...`}
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
           <div className="mt-3 flex gap-2">
             <button
-              className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white disabled:opacity-60"
+              className="px-4 py-2 rounded bg-[#07ff00] hover:bg-[#0cd806] text-white disabled:opacity-60 cursor-pointer"
               onClick={handleImport}
               disabled={busy || !text.trim()}
             >
               {busy ? "Procesando..." : "Añadir lista al carrito"}
             </button>
             <button
-              className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200"
+              className="px-3 py-2 text-black rounded bg-gray-100 hover:bg-gray-200 cursor-pointer"
               onClick={() => {
                 setText("");
                 setResult(null);
@@ -306,7 +304,7 @@ export default function Home() {
       {preAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setPreAddOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-6xl w-full overflow-hidden">
+          <div className="relative bg-[#242424] rounded-xl shadow-xl max-w-6xl w-full overflow-hidden">
             <div className="px-4 py-3 border-b flex items-center justify-between">
               <h3 className="text-lg font-semibold">
                 Previsualizar {preAddCards.reduce((sum, it) => sum + (it.entry?.qty || 1), 0)} carta(s)
@@ -378,11 +376,11 @@ export default function Home() {
                   Debes haber iniciado sesión para guardarlas.
                 </div>
               )}
-              <button className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-black" onClick={() => setPreAddOpen(false)}>
+              <button className="cursor-pointer px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-black" onClick={() => setPreAddOpen(false)}>
                 Cancelar
               </button>
               <button
-                className="px-3 py-2 rounded bg-red-500 hover:bg-red-600 text-white disabled:opacity-60"
+                className="px-3 py-2 rounded bg-[#07ff00] hover:bg-[#0cd806] text-white disabled:opacity-60 cursor-pointer"
                 onClick={saveAllToCart}
                 disabled={preAddSaving || preAddCards.length === 0 || !user}
               >
@@ -405,9 +403,9 @@ export default function Home() {
         openDialog && selectedCard && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 text-black">
             <div className="absolute inset-0 bg-black/60" onClick={() => setOpenDialog(false)} />
-            <div className="relative bg-white rounded-xl shadow-xl max-w-4xl w-full overflow-hidden">
+            <div className="relative bg-[#242424] text-white rounded-xl shadow-xl max-w-4xl w-full overflow-hidden">
               <div className="flex flex-col md:flex-row">
-                <div className="md:w-1/2 bg-gray-50 flex items-center justify-center p-3">
+                <div className="md:w-1/2 flex items-center justify-center p-3">
                   <img
                     src={getCardImage(selectedCard, "large") || getCardImage(selectedCard, "normal")}
                     alt={selectedCard.name}
@@ -417,16 +415,16 @@ export default function Home() {
                 <div className="md:w-1/2 p-4 space-y-2">
                   <div className="flex justify-between items-start gap-3">
                     <h2 className="text-xl font-bold">{selectedCard.name}</h2>
-                    <button className="text-gray-500 hover:text-gray-700" onClick={() => setOpenDialog(false)} aria-label="Cerrar">✕</button>
+                    <button className="text-[#07ff00] hover:text-[#0cd806] cursor-pointer" onClick={() => setOpenDialog(false)} aria-label="Cerrar">✕</button>
                   </div>
 
-                  <div className="text-sm text-gray-700">
+                  <div className="text-sm text-white">
                     <div><span className="font-semibold">Set:</span> {selectedCard.set_name} ({selectedCard.set?.toUpperCase()}) • #{selectedCard.collector_number}</div>
                     <div><span className="font-semibold">Rareza:</span> {selectedCard.rarity}</div>
                     <div><span className="font-semibold">Legalidades:</span> {Object.entries(selectedCard.legalities || {}).filter(([_, v]) => v === "legal").map(([k]) => k).join(", ") || "—"}</div>
                   </div>
 
-                  <div className="text-sm bg-gray-50 p-2 rounded">
+                  <div className="text-sm bg-[#0cd806] p-2 rounded">
                     <ManaText text={getOracleText(selectedCard) || "Sin texto de reglas."} size="md" />
                   </div>
 

@@ -273,18 +273,18 @@ useEffect(() => {
   // Render
   // -----------------------------
   return (
-    <div className="w-full min-h-screen bg-red-100 p-4 text-black">
+    <div className="w-full min-h-screen bg-[#242424] p-4 text-white">
       <h1 className="text-3xl font-bold mb-4">Catálogo</h1>
 
-      <p className="text-sm text-gray-800 mb-4">
+      <p className="text-sm text-white mb-4">
         Explora nuestro catálogo de cartas. Busca por <b>código</b> (<code>SET-#</code>), <b>nombre</b> o filtra por características.
       </p>
 
       {/* Filtros */}
-      <form className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm" onSubmit={(e) => e.preventDefault()}>
-        <div className="px-4 py-3 border-b border-gray-200">
-          <h2 className="text-base font-semibold text-gray-900">Filtros</h2>
-          <p className="text-xs text-gray-600">
+      <form className="mb-5 rounded-xl border border-[#07ff00] bg-[#141414] shadow-sm" onSubmit={(e) => e.preventDefault()}>
+        <div className="px-4 py-3 border-b border-[#07ff00]">
+          <h2 className="text-base font-semibold text-white">Filtros</h2>
+          <p className="text-xs text-white">
             Código prioriza una impresión exacta (ej: <code>mh3-146</code>). El nombre admite coincidencias parciales.
           </p>
         </div>
@@ -292,10 +292,10 @@ useEffect(() => {
         <div className="grid grid-cols-1 md:grid-cols-7 gap-3 p-4">
           {/* Código */}
           <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Código (SET-#)</label>
+            <label className="block text-xs font-medium text-white mb-1">Código (SET-#)</label>
             <input
               type="text"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#07ff00]"
               placeholder="Ej: Ancient Tomb (VMA) 289 · mh3-146 · eld/1"
               value={codeQuery}
               onChange={(e) => setCodeQuery(e.target.value)}
@@ -304,10 +304,10 @@ useEffect(() => {
 
           {/* Nombre */}
           <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Nombre</label>
+            <label className="block text-xs font-medium text-white mb-1">Nombre</label>
             <input
               type="text"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#07ff00]"
               placeholder="Ej: Light, Li…"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -317,9 +317,9 @@ useEffect(() => {
 
           {/* Colección (select) */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Colección (selección)</label>
+            <label className="block text-xs font-medium text-white mb-1">Colección (selección)</label>
             <select
-              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100"
+              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#07ff00] disabled:bg-gray-100"
               value={setCode}
               onChange={(e) => setSetCode(e.target.value)}
               disabled={!!name.trim() || !!codeQuery.trim()}
@@ -334,9 +334,9 @@ useEffect(() => {
 
           {/* Tipo (select) */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Tipo (selección)</label>
+            <label className="block text-xs font-medium text-white mb-1">Tipo (selección)</label>
             <select
-              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100"
+              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#07ff00] disabled:bg-gray-100"
               value={typeSelect}
               onChange={(e) => setTypeSelect(e.target.value)}
               disabled={!!name.trim() || !!codeQuery.trim()}
@@ -355,9 +355,9 @@ useEffect(() => {
 
           {/* Rareza */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Rareza</label>
+            <label className="block text-xs font-medium text-white mb-1">Rareza</label>
             <select
-              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100"
+              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#07ff00] disabled:bg-gray-100"
               value={rarity}
               onChange={(e) => setRarity(e.target.value)}
               disabled={!!name.trim() || !!codeQuery.trim()}
@@ -372,14 +372,14 @@ useEffect(() => {
 
           {/* Estilos */}
           <div className="md:col-span-3 flex flex-wrap items-center gap-4">
-            <label className=" text-xs font-medium text-gray-700">Estilos:</label>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-800 cursor-pointer">
-              <input type="checkbox" className="cursor-pointer rounded border-gray-300 text-red-600 focus:ring-red-400 disabled:bg-gray-100"
+            <label className=" text-xs font-medium text-white">Estilos:</label>
+            <label className="inline-flex items-center gap-2 text-sm text-white cursor-pointer">
+              <input type="checkbox" className="cursor-pointer rounded border-[#07ff00] text-red-600 focus:ring-[#07ff00] disabled:bg-gray-100"
                 checked={isBorderless} onChange={(e) => setIsBorderless(e.target.checked)}
                 disabled={!!name.trim() || !!codeQuery.trim()} />
               Borderless
             </label>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-800 cursor-pointer">
+            <label className="inline-flex items-center gap-2 text-sm text-white cursor-pointer">
               <input type="checkbox" className="cursor-pointer rounded border-gray-300 text-red-600 focus:ring-red-400 disabled:bg-gray-100"
                 checked={isFullArt} onChange={(e) => setIsFullArt(e.target.checked)}
                 disabled={!!name.trim() || !!codeQuery.trim()} />
@@ -413,7 +413,7 @@ useEffect(() => {
                   backgroundPosition: 'center',
                 }}
               >
-                <img src={img} alt="" className="h-55" />
+                <img src={img} alt="" className="max-h-55" />
               </div>
               {!img && (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-500 ">
@@ -431,7 +431,7 @@ useEffect(() => {
                   −
                 </button>
                 <button
-                  className="px-2 py-1 bg-red-500 hover:bg-red-600 rounded text-xs cursor-pointer"
+                  className="px-2 py-1 bg-[#07ff00] hover:bg-[#0c9e00] rounded text-xs cursor-pointer"
                   onClick={async (e) => {
                     e.stopPropagation();
                     try {
@@ -458,7 +458,7 @@ useEffect(() => {
         ) : (nextPage || cards.length > visibleCount) ? (
           <button
             onClick={fetchMore}
-            className="cursor-pointer text-white px-4 py-2 bg-red-500 border border-gray-300 rounded-lg shadow hover:shadow-md"
+            className="cursor-pointer text-white px-4 py-2 bg-[#07ff00] border border-gray-300 rounded-lg shadow hover:shadow-md transition-colors duration-200 ease-out hover:bg-[#0c9e00]"
           >
             Cargar más
           </button>
@@ -469,16 +469,16 @@ useEffect(() => {
 
       {/* Dialog de detalle */}
       {openDialog && selectedCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 text-white">
           <div className="absolute inset-0 bg-black/60" onClick={() => setOpenDialog(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-4xl w-full overflow-hidden">
+          <div className="relative bg-[#141414] rounded-xl shadow-xl max-w-4xl w-full overflow-hidden">
             <div className="flex flex-col md:flex-row">
               {/* Imagen grande sin recorte */}
-              <div className="md:w-1/2 bg-gray-50 flex items-center justify-center p-3">
+              <div className="md:w-1/2 flex items-center justify-center p-3">
                 <img
                   src={getCardImage(selectedCard, "large") || getCardImage(selectedCard, "normal")}
                   alt={selectedCard.name}
-                  className="rounded-xl h-80 sm:h-150"
+                  className="rounded-lg sm:rounded-xl h-60 sm:h-100"
                 />
               </div>
 
@@ -496,7 +496,7 @@ useEffect(() => {
                   </button>
                 </div>
 
-                <div className="text-sm text-gray-700 space-y-1">
+                <div className="text-sm text-white space-y-1">
                   <div><span className="font-semibold">Set:</span> {selectedCard.set_name} ({selectedCard.set?.toUpperCase()}) • #{selectedCard.collector_number}</div>
                   <div>
                     <span className="font-semibold">Código:</span>{" "}
@@ -508,7 +508,7 @@ useEffect(() => {
 
                 </div>
 
-                <div className="text-sm bg-gray-50 p-2 rounded">
+                <div className="text-sm bg-[#0c9e00] p-2 rounded">
                   <ManaText text={getOracleText(selectedCard) || "Sin texto de reglas."} size="md" />
                 </div>
 
@@ -516,7 +516,7 @@ useEffect(() => {
                 {/* Añadir al carrito desde el diálogo */}
                 <div className="mt-4">
                   <button
-                    className="w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded cursor-pointer mt-10"
+                    className="w-full py-2 bg-[#07ff00] hover:bg-[#0c9e00] text-white rounded cursor-pointer mt-10"
                     onClick={async () => {
                       try {
                         await add(selectedCard, 1);
@@ -533,9 +533,9 @@ useEffect(() => {
 
 
                 {!showingPrintsByName && (
-                  <div className="text-center mt-70">
+                  <div className="text-center">
                     <button
-                      className="mt-2 w-50 py-2 bg-red-500 hover:bg-red-600 text-white rounded cursor-pointer"
+                      className="mt-2 w-50 py-2 bg-[#07ff00] hover:bg-[#0c9e00] text-white rounded cursor-pointer"
                       onClick={viewAllPrintsFromDialog}
                     >
                       Ver todos sus artes
