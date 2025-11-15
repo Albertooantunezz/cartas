@@ -72,11 +72,8 @@ export default function Navbar() {
                 transition-colors duration-200 ease-out
              hover:text-[#07ff00] w-30">Catálogo</a>
 
-                    <span className="text-2xl"> | </span>
-
-                    <a href="/catalogo" className="text-xl text-white
-                transition-colors duration-200 ease-out
-             hover:text-[#07ff00] w-30">Mazo</a>
+                
+                    
 
                 </div>
 

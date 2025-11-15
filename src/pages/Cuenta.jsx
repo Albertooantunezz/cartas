@@ -308,8 +308,8 @@ export default function Cuenta() {
   // ---- No autenticado: Login / Registro
   if (!user) {
     return (
-      <div className="min-h-screen bg-red-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-xl shadow border border-gray-200">
+      <div className="min-h-screen bg-[#242424] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-xl shadow border border-gray-200 text-black">
           <div className="p-4 border-b">
             <h1 className="text-xl font-bold">Tu cuenta</h1>
             <p className="text-sm text-gray-600">Accede o crea una cuenta para ver tus pedidos.</p>
@@ -319,13 +319,13 @@ export default function Cuenta() {
             <div className="flex gap-2 mb-3">
               <button
                 onClick={() => setTab("login")}
-                className={`px-3 py-2 rounded-lg text-sm border ${tab === "login" ? "bg-red-500 text-white border-red-500" : "bg-white border-gray-300"}`}
+                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "login" ? "bg-[#0cd806] text-white hover:bg-[#09f202]" : "bg-white border-gray-300"}`}
               >
                 Iniciar sesión
               </button>
               <button
                 onClick={() => setTab("register")}
-                className={`px-3 py-2 rounded-lg text-sm border ${tab === "register" ? "bg-red-500 text-white border-red-500" : "bg-white border-gray-300"}`}
+                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "register" ? "bg-[#0cd806] text-white hover:bg-[#09f202]" : "bg-white border-gray-300"}`}
               >
                 Registrarse
               </button>
@@ -346,7 +346,7 @@ export default function Cuenta() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
                   placeholder="tu@email.com"
                   required
                 />
@@ -357,7 +357,7 @@ export default function Cuenta() {
                   type="password"
                   value={pass}
                   onChange={(e) => setPass(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
                   placeholder="••••••••"
                   required
                 />
@@ -365,7 +365,7 @@ export default function Cuenta() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white disabled:opacity-60"
+                className=" cursor-pointer w-full mt-2 py-2 rounded-lg bg-[#0cd806] hover:bg-[#09f202] text-white disabled:opacity-60"
               >
                 {loading ? "Entrando…" : "Entrar"}
               </button>
@@ -378,7 +378,7 @@ export default function Cuenta() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
                   placeholder="Tu nombre (único)"
                   required
                 />
@@ -389,7 +389,7 @@ export default function Cuenta() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
                   placeholder="tu@email.com"
                   required
                 />
@@ -400,7 +400,7 @@ export default function Cuenta() {
                   type="password"
                   value={pass}
                   onChange={(e) => setPass(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
                   placeholder="Mínimo 6 caracteres"
                   minLength={6}
                   required
@@ -409,7 +409,7 @@ export default function Cuenta() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white disabled:opacity-60"
+                className="cursor-pointer w-full mt-2 py-2 rounded-lg bg-[#0cd806] hover:bg-[#09f202] text-white disabled:opacity-60"
               >
                 {loading ? "Creando cuenta…" : "Crear cuenta"}
               </button>
@@ -422,12 +422,12 @@ export default function Cuenta() {
 
   // ---- Autenticado: Dashboard
   return (
-    <div className="min-h-screen bg-red-50 p-4 text-black">
+    <div className="min-h-screen bg-[#242424] p-4 text-black">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold">Mi cuenta</h1>
-            <p className="text-sm text-gray-600">
+            <h1 className="text-2xl font-bold text-white">Mi cuenta</h1>
+            <p className="text-sm text-gray-300">
               ¡Hola, {user.displayName || profile?.name || user.email}!
             </p>
           </div>
@@ -462,7 +462,7 @@ export default function Cuenta() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Buscar por ID, carta, estado…"
-                  className="w-full sm:w-60 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full sm:w-60 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
                 />
                 <div className="flex items-center gap-2">
                   <select
@@ -476,18 +476,13 @@ export default function Cuenta() {
                   </select>
                   <button
                     onClick={() => setOrderDir((d) => (d === "asc" ? "desc" : "asc"))}
-                    className="px-2 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                    className="px-2 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#09f202] cursor-pointer"
                     title="Cambiar dirección"
                   >
                     {orderDir === "asc" ? "Asc" : "Desc"}
                   </button>
                 </div>
-                <button
-                  onClick={crearPedidoDemo}
-                  className="text-xs px-3 py-2 rounded bg-red-100 text-red-700 hover:bg-red-200"
-                >
-                  Añadir pedido demo
-                </button>
+
               </div>
             </div>
 
@@ -543,7 +538,7 @@ export default function Cuenta() {
                               e.stopPropagation(); // evita abrir dos veces
                               setOpenOrder(o);
                             }}
-                            className="px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100"
+                            className="px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#09f202] cursor-pointer text-sm"
                           >
                             Ver detalles
                           </button>

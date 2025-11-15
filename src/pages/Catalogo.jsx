@@ -70,13 +70,13 @@ export default function Catalogo() {
 
 
   // 🔁 SUSTITUYE tu función por esta:
-const getOracleText = (c) => {
-  if (c?.oracle_text) return c.oracle_text;
-  if (Array.isArray(c?.card_faces)) {
-    return c.card_faces.map((f) => f.oracle_text).filter(Boolean).join("\n—\n");
-  }
-  return "";
-};
+  const getOracleText = (c) => {
+    if (c?.oracle_text) return c.oracle_text;
+    if (Array.isArray(c?.card_faces)) {
+      return c.card_faces.map((f) => f.oracle_text).filter(Boolean).join("\n—\n");
+    }
+    return "";
+  };
 
 
 
@@ -215,15 +215,15 @@ const getOracleText = (c) => {
     }
   };
 
-useEffect(() => {
-  // Si hay una búsqueda pendiente, la cancelamos
-  const handler = setTimeout(() => {
-    fetchInitial();
-  }, 400); // 400 ms de espera desde la última tecla
+  useEffect(() => {
+    // Si hay una búsqueda pendiente, la cancelamos
+    const handler = setTimeout(() => {
+      fetchInitial();
+    }, 400); // 400 ms de espera desde la última tecla
 
-  return () => clearTimeout(handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [name, codeQuery, computedQuery]);
+    return () => clearTimeout(handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, codeQuery, computedQuery]);
 
 
   // Detalle
@@ -281,8 +281,8 @@ useEffect(() => {
       </p>
 
       {/* Filtros */}
-      <form className="mb-5 rounded-xl border border-[#07ff00] bg-[#141414] shadow-sm" onSubmit={(e) => e.preventDefault()}>
-        <div className="px-4 py-3 border-b border-[#07ff00]">
+      <form className="mb-5 rounded-xl border border-[#0cd806] bg-[#141414] shadow-sm" onSubmit={(e) => e.preventDefault()}>
+        <div className="px-4 py-3 border-b border-[#0cd806]">
           <h2 className="text-base font-semibold text-white">Filtros</h2>
           <p className="text-xs text-white">
             Código prioriza una impresión exacta (ej: <code>mh3-146</code>). El nombre admite coincidencias parciales.
@@ -295,7 +295,7 @@ useEffect(() => {
             <label className="block text-xs font-medium text-white mb-1">Código (SET-#)</label>
             <input
               type="text"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#07ff00]"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
               placeholder="Ej: Ancient Tomb (VMA) 289 · mh3-146 · eld/1"
               value={codeQuery}
               onChange={(e) => setCodeQuery(e.target.value)}
@@ -307,7 +307,7 @@ useEffect(() => {
             <label className="block text-xs font-medium text-white mb-1">Nombre</label>
             <input
               type="text"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#07ff00]"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
               placeholder="Ej: Light, Li…"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -319,7 +319,7 @@ useEffect(() => {
           <div>
             <label className="block text-xs font-medium text-white mb-1">Colección (selección)</label>
             <select
-              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#07ff00] disabled:bg-gray-100"
+              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0cd806] disabled:bg-gray-100"
               value={setCode}
               onChange={(e) => setSetCode(e.target.value)}
               disabled={!!name.trim() || !!codeQuery.trim()}
@@ -336,7 +336,7 @@ useEffect(() => {
           <div>
             <label className="block text-xs font-medium text-white mb-1">Tipo (selección)</label>
             <select
-              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#07ff00] disabled:bg-gray-100"
+              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0cd806] disabled:bg-gray-100"
               value={typeSelect}
               onChange={(e) => setTypeSelect(e.target.value)}
               disabled={!!name.trim() || !!codeQuery.trim()}
@@ -357,7 +357,7 @@ useEffect(() => {
           <div>
             <label className="block text-xs font-medium text-white mb-1">Rareza</label>
             <select
-              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#07ff00] disabled:bg-gray-100"
+              className="cursor-pointer w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0cd806] disabled:bg-gray-100"
               value={rarity}
               onChange={(e) => setRarity(e.target.value)}
               disabled={!!name.trim() || !!codeQuery.trim()}
@@ -374,7 +374,7 @@ useEffect(() => {
           <div className="md:col-span-3 flex flex-wrap items-center gap-4">
             <label className=" text-xs font-medium text-white">Estilos:</label>
             <label className="inline-flex items-center gap-2 text-sm text-white cursor-pointer">
-              <input type="checkbox" className="cursor-pointer rounded border-[#07ff00] text-red-600 focus:ring-[#07ff00] disabled:bg-gray-100"
+              <input type="checkbox" className="cursor-pointer rounded border-[#0cd806] text-red-600 focus:ring-[#0cd806] disabled:bg-gray-100"
                 checked={isBorderless} onChange={(e) => setIsBorderless(e.target.checked)}
                 disabled={!!name.trim() || !!codeQuery.trim()} />
               Borderless
@@ -431,7 +431,7 @@ useEffect(() => {
                   −
                 </button>
                 <button
-                  className="px-2 py-1 bg-[#07ff00] hover:bg-[#0c9e00] rounded text-xs cursor-pointer"
+                  className="px-2 py-1 bg-[#0cd806] hover:bg-[#09f202] rounded text-xs cursor-pointer"
                   onClick={async (e) => {
                     e.stopPropagation();
                     try {
@@ -458,7 +458,7 @@ useEffect(() => {
         ) : (nextPage || cards.length > visibleCount) ? (
           <button
             onClick={fetchMore}
-            className="cursor-pointer text-white px-4 py-2 bg-[#07ff00] border border-gray-300 rounded-lg shadow hover:shadow-md transition-colors duration-200 ease-out hover:bg-[#0c9e00]"
+            className="cursor-pointer text-white px-4 py-2 bg-[#0cd806] border border-gray-300 rounded-lg shadow hover:shadow-md transition-colors duration-200 ease-out hover:bg-[#09f202]"
           >
             Cargar más
           </button>
@@ -508,7 +508,7 @@ useEffect(() => {
 
                 </div>
 
-                <div className="text-sm bg-[#0c9e00] p-2 rounded">
+                <div className="text-sm bg-[#09f202] p-2 rounded">
                   <ManaText text={getOracleText(selectedCard) || "Sin texto de reglas."} size="md" />
                 </div>
 
@@ -516,7 +516,7 @@ useEffect(() => {
                 {/* Añadir al carrito desde el diálogo */}
                 <div className="mt-4">
                   <button
-                    className="w-full py-2 bg-[#07ff00] hover:bg-[#0c9e00] text-white rounded cursor-pointer mt-10"
+                    className="w-full py-2 bg-[#0cd806] hover:bg-[#09f202] text-white rounded cursor-pointer mt-10"
                     onClick={async () => {
                       try {
                         await add(selectedCard, 1);
@@ -535,7 +535,7 @@ useEffect(() => {
                 {!showingPrintsByName && (
                   <div className="text-center">
                     <button
-                      className="mt-2 w-50 py-2 bg-[#07ff00] hover:bg-[#0c9e00] text-white rounded cursor-pointer"
+                      className="mt-2 w-50 py-2 bg-[#0cd806] hover:bg-[#09f202] text-white rounded cursor-pointer"
                       onClick={viewAllPrintsFromDialog}
                     >
                       Ver todos sus artes

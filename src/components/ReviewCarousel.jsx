@@ -11,7 +11,7 @@ export default function ReviewCarousel({ reviews }) {
 
   return (
     <div className="relative w-full max-w-xl mx-auto p-6">
-      <div className="bg-[#07ff00] shadow-xl rounded-2xl p-6 flex flex-col items-center text-center">
+      <div className="bg-[#0cd806] shadow-xl rounded-2xl p-6 flex flex-col items-center text-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={index}
@@ -53,7 +53,7 @@ export default function ReviewCarousel({ reviews }) {
           <div
             key={i}
             className={`w-3 h-3 rounded-full ${
-              i === index ? "bg-[#07ff00]" : "bg-gray-300"
+              i === index ? "bg-[#0cd806]" : "bg-gray-300"
             }`}
           />
         ))}

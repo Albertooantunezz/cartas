@@ -206,7 +206,7 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white  w-full  text-center">
           <h2 className="text-3xl font-bold">¡Explora nuestro catálogo!</h2>
           <a href="/catalogo">
-            <button className="bg-[#07ff00] text-white px-4 py-2 rounded-xl hover:bg-[#0cd806] mt-5 w-50 cursor-pointer">
+            <button className="bg-[#0cd806] text-white px-4 py-2 rounded-xl hover:bg-[#09f202] mt-5 w-50 cursor-pointer">
               Catálogo
             </button>
           </a>
@@ -215,7 +215,7 @@ export default function Home() {
 
       <div className="text-center bg-black-800 w-full p-10 shadow-lg text-white md:px-20 lg:px-60">
         <h2 className="text-2xl font-bold ">Bienvenido a la tienda</h2>
-        <span className="w-full bg-[#07ff00] h-1 block mt-5 rounded-xl"></span>
+        <span className="w-full bg-[#0cd806] h-1 block mt-5 rounded-xl"></span>
         <p className="lg:text-xl mt-10">
           Lorem ipsum dolor sit amet consectetur adipisicing elit. Provident pariatur iure officia alias quam impedit
           excepturi qui necessitatibus. Accusantium magni quasi rem voluptates provident repellat iste commodi laborum?
@@ -223,19 +223,19 @@ export default function Home() {
         </p>
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-4 mt-10">
-          <div className="bg-[#07ff00] p-4 rounded-lg shadow">
+          <div className="bg-[#0cd806] p-4 rounded-lg shadow">
             <h3 className="font-bold mt-2 text-4xl">2€ p/u</h3>
             <p>8 cartas</p>
           </div>
-          <div className="bg-[#07ff00] p-4 rounded-lg shadow">
+          <div className="bg-[#0cd806] p-4 rounded-lg shadow">
             <h3 className="font-bold mt-2 text-4xl">1.5€ p/u</h3>
             <p>+8 cartas</p>
           </div>
-          <div className="bg-[#07ff00] p-4 rounded-lg shadow">
+          <div className="bg-[#0cd806] p-4 rounded-lg shadow">
             <h3 className="font-bold mt-2 text-4xl">1€ p/u</h3>
             <p>+40 cartas</p>
           </div>
-          <div className="bg-[#07ff00] p-4 rounded-lg shadow">
+          <div className="bg-[#0cd806] p-4 rounded-lg shadow">
             <h3 className="font-bold mt-2 text-4xl">0.5€ p/u</h3>
             <p>+50 cartas</p>
           </div>
@@ -248,14 +248,14 @@ export default function Home() {
             Pega líneas en formato <code>1 Nombre (SET) Número</code>. Previsualizamos y podrás guardar todas las que se encuentren; si alguna falla, verás el aviso dentro del diálogo.
           </p>
           <textarea
-            className="w-full h-64 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#07ff00] font-mono text-sm"
+            className="w-full h-64 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806] font-mono text-sm"
             placeholder={`1 Ancient Tomb (VMA) 289\n1 Haunted Ridge (MID) 263 F\n1 Urza's Saga (MH2) 259\n...`}
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
           <div className="mt-3 flex gap-2">
             <button
-              className="px-4 py-2 rounded bg-[#07ff00] hover:bg-[#0cd806] text-white disabled:opacity-60 cursor-pointer"
+              className="px-4 py-2 rounded bg-[#0cd806] hover:bg-[#09f202] text-white disabled:opacity-60 cursor-pointer"
               onClick={handleImport}
               disabled={busy || !text.trim()}
             >
@@ -380,7 +380,7 @@ export default function Home() {
                 Cancelar
               </button>
               <button
-                className="px-3 py-2 rounded bg-[#07ff00] hover:bg-[#0cd806] text-white disabled:opacity-60 cursor-pointer"
+                className="px-3 py-2 rounded bg-[#0cd806] hover:bg-[#09f202] text-white disabled:opacity-60 cursor-pointer"
                 onClick={saveAllToCart}
                 disabled={preAddSaving || preAddCards.length === 0 || !user}
               >
@@ -415,7 +415,7 @@ export default function Home() {
                 <div className="md:w-1/2 p-4 space-y-2">
                   <div className="flex justify-between items-start gap-3">
                     <h2 className="text-xl font-bold">{selectedCard.name}</h2>
-                    <button className="text-[#07ff00] hover:text-[#0cd806] cursor-pointer" onClick={() => setOpenDialog(false)} aria-label="Cerrar">✕</button>
+                    <button className="text-[#0cd806] hover:text-[#09f202] cursor-pointer" onClick={() => setOpenDialog(false)} aria-label="Cerrar">✕</button>
                   </div>
 
                   <div className="text-sm text-white">
@@ -424,7 +424,7 @@ export default function Home() {
                     <div><span className="font-semibold">Legalidades:</span> {Object.entries(selectedCard.legalities || {}).filter(([_, v]) => v === "legal").map(([k]) => k).join(", ") || "—"}</div>
                   </div>
 
-                  <div className="text-sm bg-[#0cd806] p-2 rounded">
+                  <div className="text-sm bg-[#09f202] p-2 rounded">
                     <ManaText text={getOracleText(selectedCard) || "Sin texto de reglas."} size="md" />
                   </div>
 

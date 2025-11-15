@@ -402,10 +402,10 @@ export default function Carrito() {
 
 
   return (
-    <div className="min-h-screen bg-red-50 p-4">
+    <div className="min-h-screen bg-[#242424] p-4">
       <div className="mx-auto max-w-7xl">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-black">Carrito</h1>
+          <h1 className="text-2xl font-bold text-white">Carrito</h1>
           <div className="flex items-center gap-2">
             {orderedItems.length > 0 && (
               <button
@@ -417,7 +417,7 @@ export default function Carrito() {
               </button>
             )}
             <button
-              className="px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-60"
+              className="px-3 py-2 rounded-lg bg-[#0cd806] text-white hover:bg-[#09f202] disabled:opacity-60 cursor-pointer"
               onClick={async () => {
                 if (isPaying) return;
 
@@ -538,7 +538,7 @@ export default function Carrito() {
             {filteredItems.length === 0 ? (
               <div className="text-sm text-gray-600 p-4">No hay cartas que coincidan con el filtro.</div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {[...filteredItems]
                   .sort((a, b) => {
                     const idA = a.card?.id;
@@ -570,11 +570,11 @@ export default function Carrito() {
                     return (
                       <div
                         key={card.id || `${card.oracle_id}-fallback`}
-                        className="relative group rounded-lg overflow-hidden shadow hover:shadow-md bg-white border border-gray-200"
+                        className="relative group rounded-lg overflow-hidden shadow hover:shadow-md bg-white border border-gray-200 c"
                       >
                         {/* Imagen clickable → abre estilos */}
                         <button
-                          className="block w-full"
+                          className="block w-full cursor-pointer"
                           onClick={() => openPrintsFor(it)}
                           title="Ver estilos (impresiones)"
                           disabled={isClearing}
@@ -610,7 +610,7 @@ export default function Carrito() {
                         <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white px-2 py-1 flex items-center justify-between">
                           <div className="flex items-center gap-1">
                             <button
-                              className="px-2 py-0.5 bg-white/20 rounded hover:bg-white/30"
+                              className="px-2 py-0.5 bg-white/20 rounded hover:bg-white/30 cursor-pointer"
                               onClick={() => changeQty(card, -1, qty)}
                               title="Quitar 1"
                               disabled={isClearing}
@@ -619,7 +619,7 @@ export default function Carrito() {
                             </button>
                             <span className="w-7 text-center text-sm">{displayQty || 0}</span>
                             <button
-                              className="px-2 py-0.5 bg-white/20 rounded hover:bg-white/30"
+                              className="px-2 py-0.5 bg-white/20 rounded hover:bg-white/30 cursor-pointer"
                               onClick={() => changeQty(card, +1, qty)}
                               title="Añadir 1"
                               disabled={isClearing}
@@ -628,7 +628,7 @@ export default function Carrito() {
                             </button>
                           </div>
                           <button
-                            className="px-2 py-1 bg-red-500 hover:bg-red-600 rounded text-xs"
+                            className="px-2 py-1 bg-[#0cd806] hover:bg-[#09f202] rounded text-xs cursor-pointer"
                             onClick={() => remove?.(card.id)}
                             title="Eliminar del carrito"
                             disabled={isClearing}
@@ -656,9 +656,9 @@ export default function Carrito() {
           Dialogo: Estilos (prints)
          ======================= */}
       {printsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setPrintsOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-6xl w-full overflow-hidden">
+        <div className="fixed inset-0 z-50  flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 " onClick={() => setPrintsOpen(false)} />
+          <div className="relative bg-[#141414] rounded-xl shadow-xl max-w-6xl w-full overflow-hidden ">
             <div className="px-4 py-3 border-b flex items-center justify-between">
               <h3 className="text-lg font-semibold">
                 Estilos de {printsCard?.card?.name || "—"}
