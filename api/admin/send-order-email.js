@@ -1,43 +1,31 @@
 // /api/admin/send-order-email.js
+// Envía emails de "Enviado" / "Recibido" solo para admins
 
-const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 
-const ADMIN_EMAILS = ["alber968968@gmail.com", "NVproxys.com@gmail.com"];
+const ADMIN_EMAILS = ["alber968968@gmail.com"];
 
-// Inicializar Firebase Admin solo una vez
+// Inicializamos Firebase Admin de forma segura
+let adminInitError = null;
+
 if (!admin.apps.length) {
-  const rawKey = process.env.FIREBASE_PRIVATE_KEY;
-  const privateKey = rawKey ? rawKey.replace(/\\n/g, "\n") : undefined;
+  try {
+    const rawKey = process.env.FIREBASE_PRIVATE_KEY;
+    const privateKey = rawKey ? rawKey.replace(/\\n/g, "\n") : undefined;
 
-  console.log("[send-order-email] init admin app, project:", process.env.FIREBASE_PROJECT_ID);
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey,
+      }),
+    });
 
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey,
-    }),
-  });
-}
-
-function createTransporter() {
-  console.log("[send-order-email] createTransporter", {
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    user: process.env.SMTP_USER,
-    // NO logueamos la password
-  });
-
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+    console.log("[send-order-email] Firebase Admin inicializado");
+  } catch (e) {
+    adminInitError = e;
+    console.error("[send-order-email] Error inicializando Firebase Admin:", e);
+  }
 }
 
 function buildEmailContent(type, { orderId, user, totalEUR, totalQty, items }) {
@@ -115,9 +103,18 @@ NV Proxy
 }
 
 module.exports = async (req, res) => {
+  // Solo POST
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // Si falló la init de Admin, devolvemos el error claro
+  if (adminInitError) {
+    console.error("[send-order-email] adminInitError:", adminInitError);
+    return res
+      .status(500)
+      .json({ error: "Firebase Admin init failed", details: String(adminInitError) });
   }
 
   try {
@@ -169,6 +166,28 @@ module.exports = async (req, res) => {
     const mailFrom = process.env.MAIL_FROM || "NVproxy.com@gmail.com";
     const mailTo = user.email;
 
+    // ---- 3. Cargar nodemailer dinámicamente (para poder capturar errores) ----
+    let nodemailer;
+    try {
+      nodemailer = (await import("nodemailer")).default;
+    } catch (e) {
+      console.error("[send-order-email] Error importing nodemailer:", e);
+      return res.status(500).json({
+        error: "Nodemailer import failed",
+        details: String(e),
+      });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
     const { subject, text, html } = buildEmailContent(type, {
       orderId,
       user,
@@ -177,8 +196,6 @@ module.exports = async (req, res) => {
       items,
       checkoutSessionId,
     });
-
-    const transporter = createTransporter();
 
     console.log("[send-order-email] sending mail", {
       from: mailFrom,
