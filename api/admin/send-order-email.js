@@ -1,17 +1,16 @@
 // /api/admin/send-order-email.js
-// Envía emails de "Enviado" / "Recibido" para pedidos (solo admins)
 
 const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 
-// Emails de admin permitidos
-const ADMIN_EMAILS = ["alber968968@gmail.com"];
+const ADMIN_EMAILS = ["alber968968@gmail.com", "NVproxys.com@gmail.com"];
 
 // Inicializar Firebase Admin solo una vez
 if (!admin.apps.length) {
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-    : undefined;
+  const rawKey = process.env.FIREBASE_PRIVATE_KEY;
+  const privateKey = rawKey ? rawKey.replace(/\\n/g, "\n") : undefined;
+
+  console.log("[send-order-email] init admin app, project:", process.env.FIREBASE_PROJECT_ID);
 
   admin.initializeApp({
     credential: admin.credential.cert({
@@ -22,19 +21,20 @@ if (!admin.apps.length) {
   });
 }
 
-// Crea el transporter de Nodemailer (Gmail / SMTP)
 function createTransporter() {
-  // Para Gmail típico:
-  // SMTP_HOST = smtp.gmail.com
-  // SMTP_PORT = 587
-  // SMTP_USER = NVproxy.com@gmail.com
-  // SMTP_PASS = (app password de Gmail)
+  console.log("[send-order-email] createTransporter", {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    user: process.env.SMTP_USER,
+    // NO logueamos la password
+  });
+
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: Number(process.env.SMTP_PORT || 587),
-    secure: false, // true para 465
+    secure: false,
     auth: {
-      user: process.env.SMTP_USER, // ej: NVproxy.com@gmail.com
+      user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
   });
@@ -90,7 +90,6 @@ ${items?.length
     return { subject, text, html };
   }
 
-  // type === "delivered"
   const subject = `Tu pedido #${shortId} ha sido entregado`;
   const text = `
 Hola ${safeName},
@@ -116,20 +115,22 @@ NV Proxy
 }
 
 module.exports = async (req, res) => {
-  // Solo POST
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    // ========= 1. Autenticación =========
+    console.log("[send-order-email] incoming request");
+
+    // ---- 1. Auth ----
     const authHeader = req.headers.authorization || "";
     const token = authHeader.startsWith("Bearer ")
       ? authHeader.slice("Bearer ".length)
       : null;
 
     if (!token) {
+      console.log("[send-order-email] missing token");
       return res.status(401).json({ error: "No auth token provided" });
     }
 
@@ -137,18 +138,23 @@ module.exports = async (req, res) => {
     try {
       decoded = await admin.auth().verifyIdToken(token);
     } catch (e) {
-      console.error("Error verifying token", e);
-      return res.status(401).json({ error: "Invalid auth token" });
+      console.error("[send-order-email] verifyIdToken error", e);
+      return res.status(401).json({ error: "Invalid auth token", details: String(e) });
     }
 
     const userEmail = (decoded.email || "").toLowerCase();
+    console.log("[send-order-email] authed as", userEmail);
+
     if (!ADMIN_EMAILS.includes(userEmail)) {
+      console.log("[send-order-email] not admin");
       return res.status(403).json({ error: "Not authorized (admin only)" });
     }
 
-    // ========= 2. Validar body =========
+    // ---- 2. Body ----
     const { type, orderId, user, totalEUR, totalQty, items, checkoutSessionId } =
       req.body || {};
+
+    console.log("[send-order-email] body", { type, orderId, userEmail: user?.email });
 
     if (!type || !["shipped", "delivered"].includes(type)) {
       return res.status(400).json({ error: "Invalid type (shipped | delivered)" });
@@ -163,7 +169,6 @@ module.exports = async (req, res) => {
     const mailFrom = process.env.MAIL_FROM || "NVproxy.com@gmail.com";
     const mailTo = user.email;
 
-    // ========= 3. Construir email =========
     const { subject, text, html } = buildEmailContent(type, {
       orderId,
       user,
@@ -175,10 +180,12 @@ module.exports = async (req, res) => {
 
     const transporter = createTransporter();
 
-    // Opcional: comprobar conexión SMTP
-    // await transporter.verify();
+    console.log("[send-order-email] sending mail", {
+      from: mailFrom,
+      to: mailTo,
+      subject,
+    });
 
-    // ========= 4. Enviar email =========
     await transporter.sendMail({
       from: `"NV Proxy" <${mailFrom}>`,
       to: mailTo,
@@ -187,9 +194,11 @@ module.exports = async (req, res) => {
       html,
     });
 
+    console.log("[send-order-email] mail sent ok");
+
     return res.status(200).json({ ok: true });
   } catch (e) {
-    console.error("send-order-email error", e);
-    return res.status(500).json({ error: "Internal error sending email" });
+    console.error("[send-order-email] ERROR", e);
+    return res.status(500).json({ error: String(e) });
   }
 };
