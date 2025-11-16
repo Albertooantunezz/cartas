@@ -731,7 +731,7 @@ export default function Carrito() {
             <div className="px-4 py-3 border-t text-sm text-gray-600">
               Mantendremos la misma cantidad ({printsCard?.qty || 1}) al cambiar de estilo.
             </div>
-          </div>
+          </div>  
         </div>
       )}
     </div>

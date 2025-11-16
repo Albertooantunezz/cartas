@@ -1,11 +1,12 @@
 // /api/admin/send-order-email.js
-// Envía emails de "Enviado" / "Recibido" solo para admins
+// Envía emails de "Enviado" / "Recibido" solo para admins (ESM)
 
-const admin = require("firebase-admin");
+import nodemailer from "nodemailer";
+import admin from "firebase-admin";
 
-const ADMIN_EMAILS = ["alber968968@gmail.com"];
+const ADMIN_EMAILS = ["alber968968@gmail.com", "danielvillanuevatrabajo@gmail.com"];
 
-// Inicializamos Firebase Admin de forma segura
+// ---------- Init Firebase Admin una sola vez, con captura de errores ----------
 let adminInitError = null;
 
 if (!admin.apps.length) {
@@ -102,25 +103,27 @@ NV Proxy
   return { subject, text, html };
 }
 
-module.exports = async (req, res) => {
+// 👇 IMPORTANTE: en ESM se usa export default, no module.exports
+export default async function handler(req, res) {
   // Solo POST
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Si falló la init de Admin, devolvemos el error claro
+  // Si Firebase Admin petó al iniciar, lo decimos aquí
   if (adminInitError) {
     console.error("[send-order-email] adminInitError:", adminInitError);
-    return res
-      .status(500)
-      .json({ error: "Firebase Admin init failed", details: String(adminInitError) });
+    return res.status(500).json({
+      error: "Firebase Admin init failed",
+      details: String(adminInitError),
+    });
   }
 
   try {
     console.log("[send-order-email] incoming request");
 
-    // ---- 1. Auth ----
+    // ---- 1. Auth de admin ----
     const authHeader = req.headers.authorization || "";
     const token = authHeader.startsWith("Bearer ")
       ? authHeader.slice("Bearer ".length)
@@ -136,7 +139,9 @@ module.exports = async (req, res) => {
       decoded = await admin.auth().verifyIdToken(token);
     } catch (e) {
       console.error("[send-order-email] verifyIdToken error", e);
-      return res.status(401).json({ error: "Invalid auth token", details: String(e) });
+      return res
+        .status(401)
+        .json({ error: "Invalid auth token", details: String(e) });
     }
 
     const userEmail = (decoded.email || "").toLowerCase();
@@ -166,18 +171,7 @@ module.exports = async (req, res) => {
     const mailFrom = process.env.MAIL_FROM || "NVproxy.com@gmail.com";
     const mailTo = user.email;
 
-    // ---- 3. Cargar nodemailer dinámicamente (para poder capturar errores) ----
-    let nodemailer;
-    try {
-      nodemailer = (await import("nodemailer")).default;
-    } catch (e) {
-      console.error("[send-order-email] Error importing nodemailer:", e);
-      return res.status(500).json({
-        error: "Nodemailer import failed",
-        details: String(e),
-      });
-    }
-
+    // ---- 3. Configurar Nodemailer (SMTP Gmail con App Password) ----
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number(process.env.SMTP_PORT || 587),
@@ -218,4 +212,4 @@ module.exports = async (req, res) => {
     console.error("[send-order-email] ERROR", e);
     return res.status(500).json({ error: String(e) });
   }
-};
+}

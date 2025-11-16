@@ -1,9 +1,8 @@
 // src/pages/Cuenta.jsx
-// Dashboard de cuenta con listado de pedidos, modal responsive
-// y panel de admin (gestiona todos los pedidos + envío de emails)
+// Dashboard de cuenta con pedidos, modal responsive y panel admin con filtros + emails
 
 import React, { useEffect, useMemo, useState } from "react";
-import { auth, db } from "../firebase"; // ajusta si tu path es distinto
+import { auth, db } from "../firebase";
 
 import {
   onAuthStateChanged,
@@ -26,6 +25,7 @@ import {
   runTransaction,
   collectionGroup,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 // ------ utils UI ------
@@ -51,6 +51,15 @@ function formatDate(ts) {
   }
 }
 
+function formatDateOnly(ts) {
+  try {
+    const d = ts?.toDate ? ts.toDate() : ts instanceof Date ? ts : null;
+    return d ? d.toLocaleDateString() : "";
+  } catch {
+    return "";
+  }
+}
+
 function formatMoney(n) {
   if (typeof n !== "number") return "—";
   return `${n.toFixed(2)} €`;
@@ -64,7 +73,30 @@ function statusBadgeClasses(status = "") {
     return "bg-yellow-100 text-yellow-800 border-yellow-200";
   if (s.includes("canceled") || s.includes("refunded") || s.includes("failed"))
     return "bg-red-100 text-red-700 border-red-200";
+  if (s.includes("shipped") || s.includes("delivered"))
+    return "bg-green-100 text-green-700 border-green-200";
   return "bg-gray-100 text-gray-700 border-gray-200";
+}
+
+// Helper para shippingStatus en admin (texto bonito + clase)
+function getShippingStatusMeta(order) {
+  const s = order.shippingStatus;
+  if (s === "shipped") {
+    return {
+      label: "Enviado",
+      className: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    };
+  }
+  if (s === "delivered") {
+    return {
+      label: "Entregado",
+      className: "bg-green-100 text-green-700 border-green-200",
+    };
+  }
+  return {
+    label: "Pendiente",
+    className: "bg-gray-100 text-gray-700 border-gray-200",
+  };
 }
 
 export default function Cuenta() {
@@ -94,17 +126,17 @@ export default function Cuenta() {
   const [orderDir, setOrderDir] = useState("desc"); // asc | desc
 
   // Modal de detalles (para cualquier pedido: usuario o admin)
-  const [openOrder, setOpenOrder] = useState(null); // objeto pedido seleccionado
+  const [openOrder, setOpenOrder] = useState(null);
 
   // ========= ADMIN =========
-  const ADMIN_EMAILS = ["alber968968@gmail.com"]; // aquí puedes añadir más emails de admin
-
+  const ADMIN_EMAILS = ["alber968968@gmail.com"];
   const isAdmin = !!(user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
 
   const [adminOrders, setAdminOrders] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState("");
   const [adminSearch, setAdminSearch] = useState("");
+  const [adminStatusFilter, setAdminStatusFilter] = useState("all"); // all | pending | shipped | delivered
 
   // ==============
   // Observa Auth
@@ -144,7 +176,7 @@ export default function Cuenta() {
       unsubProfile();
       unsubOrders();
     };
-  }, [user, db]);
+  }, [user]);
 
   // ===========================
   // Cargar pedidos globales (solo admin)
@@ -166,12 +198,11 @@ export default function Cuenta() {
       async (snap) => {
         try {
           const tmp = [];
-          const userCache = new Map(); // uid -> userData
+          const userCache = new Map();
 
           for (const d of snap.docs) {
             const data = { id: d.id, ...d.data() };
 
-            // Derivamos el uid a partir de la ruta: users/{uid}/orders/{orderId}
             const parentUserRef = d.ref.parent?.parent;
             const uid = parentUserRef?.id;
             let userMeta = null;
@@ -190,7 +221,7 @@ export default function Cuenta() {
 
             tmp.push({
               ...data,
-              _user: userMeta, // info del cliente
+              _user: userMeta,
             });
           }
 
@@ -219,7 +250,7 @@ export default function Cuenta() {
       cancelled = true;
       unsub();
     };
-  }, [user, isAdmin, db]);
+  }, [user, isAdmin]);
 
   // ======================
   // Registro con username
@@ -230,21 +261,17 @@ export default function Cuenta() {
     setLoading(true);
 
     try {
-      // 1) Crea usuario en Auth
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), pass);
-
-      // 2) Normaliza y exige nombre
       const uname = (name || "").trim();
       if (!uname) {
         setErr("Debes indicar un nombre de usuario.");
         try {
           await deleteUser(cred.user);
-        } catch { }
+        } catch {}
         return;
       }
       const unameKey = uname.toLowerCase();
 
-      // 3) Transacción: reservar username único en /usernames/{unameKey}
       try {
         await runTransaction(db, async (tx) => {
           const ref = doc(db, "usernames", unameKey);
@@ -260,14 +287,12 @@ export default function Cuenta() {
         } else {
           setErr("No se pudo reservar el nombre. Revisa reglas de Firestore y vuelve a intentar.");
         }
-        // Evita dejar usuario “huérfano” si falló la reserva
         try {
           await deleteUser(cred.user);
-        } catch { }
+        } catch {}
         return;
       }
 
-      // 4) Perfil en Auth y Firestore (ya con username reservado)
       await updateProfile(cred.user, { displayName: uname });
 
       await setDoc(doc(db, "users", cred.user.uid), {
@@ -278,7 +303,6 @@ export default function Cuenta() {
         updatedAt: serverTimestamp(),
       });
 
-      // 5) Limpia formularios
       setName("");
       setEmail("");
       setPass("");
@@ -308,7 +332,9 @@ export default function Cuenta() {
     }
   };
 
-  // ============ Cerrar sesión ============
+  // ============
+  // Cerrar sesión
+  // ============
   const handleLogout = async () => {
     setErr("");
     setLoading(true);
@@ -358,6 +384,7 @@ export default function Cuenta() {
         ],
         status: "processing",
         checkoutSessionId: "demo_session",
+        shippingStatus: "pending",
       });
     } catch (e2) {
       setErr(parseFirebaseErr(e2));
@@ -376,6 +403,7 @@ export default function Cuenta() {
         const id = o.id?.toLowerCase?.() || "";
         const status = o.status?.toLowerCase?.() || "";
         const session = o.checkoutSessionId?.toLowerCase?.() || "";
+        const dateStr = formatDateOnly(o.createdAt).toLowerCase();
         const itemsText = (o.items || [])
           .map((it) => (it.name || it.cardId || "").toLowerCase())
           .join(" ");
@@ -383,6 +411,7 @@ export default function Cuenta() {
           id.includes(term) ||
           status.includes(term) ||
           session.includes(term) ||
+          dateStr.includes(term) ||
           itemsText.includes(term)
         );
       });
@@ -409,32 +438,67 @@ export default function Cuenta() {
 
   // ====== pedidos admin filtrados ======
   const filteredAdminOrders = useMemo(() => {
-    const term = adminSearch.trim().toLowerCase();
-    if (!term) return adminOrders;
+    let arr = adminOrders.slice();
 
-    return adminOrders.filter((o) => {
+    // Filtro por estado (shippingStatus)
+    if (adminStatusFilter !== "all") {
+      arr = arr.filter((o) => {
+        const s = o.shippingStatus || "pending";
+        if (adminStatusFilter === "pending") {
+          return s !== "shipped" && s !== "delivered";
+        }
+        return s === adminStatusFilter;
+      });
+    }
+
+    const term = adminSearch.trim().toLowerCase();
+    if (!term) return arr;
+
+    return arr.filter((o) => {
       const id = o.id?.toLowerCase?.() || "";
       const status = o.status?.toLowerCase?.() || "";
+      const shipping = (o.shippingStatus || "pending").toLowerCase();
       const session = o.checkoutSessionId?.toLowerCase?.() || "";
       const email = o._user?.email?.toLowerCase?.() || "";
       const name = o._user?.name?.toLowerCase?.() || "";
+      const uid = o._user?.uid?.toLowerCase?.() || "";
+      const dateStr = formatDateOnly(o.createdAt).toLowerCase();
       const itemsText = (o.items || [])
         .map((it) => (it.name || it.cardId || "").toLowerCase())
         .join(" ");
+
       return (
         id.includes(term) ||
         status.includes(term) ||
+        shipping.includes(term) ||
         session.includes(term) ||
         email.includes(term) ||
         name.includes(term) ||
+        uid.includes(term) ||
+        dateStr.includes(term) ||
         itemsText.includes(term)
       );
     });
-  }, [adminOrders, adminSearch]);
+  }, [adminOrders, adminSearch, adminStatusFilter]);
 
-  // ========= Envío de email admin =========
+  // ========= Envío de email admin + actualización shippingStatus =========
   const handleAdminEmail = async (order, type) => {
+    // type: "shipped" | "delivered"
     const label = type === "shipped" ? "Enviado" : "Recibido";
+
+    const shipping = order.shippingStatus;
+    const alreadyShipped = shipping === "shipped" || shipping === "delivered";
+    const alreadyDelivered = shipping === "delivered";
+
+    if (type === "shipped" && alreadyShipped) {
+      alert("Este pedido ya está marcado como enviado.");
+      return;
+    }
+    if (type === "delivered" && alreadyDelivered) {
+      alert("Este pedido ya está marcado como entregado.");
+      return;
+    }
+
     const customerEmail = order._user?.email;
     const customerName = order._user?.name || "(sin nombre)";
     const shortId = order.id?.slice?.(-6)?.toUpperCase?.() || order.id;
@@ -462,7 +526,7 @@ export default function Cuenta() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`, // 🔐 muy importante
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           type, // "shipped" | "delivered"
@@ -480,9 +544,29 @@ export default function Cuenta() {
       });
 
       if (!res.ok) {
-        console.error("Error al enviar email:", await res.text());
+        const txt = await res.text();
+        console.error("Error al enviar email:", txt);
         alert("Hubo un problema al enviar el email. Revisa los logs del backend.");
         return;
+      }
+
+      // Actualizar shippingStatus en Firestore para bloquear el botón a futuro
+      try {
+        const uid = order._user?.uid;
+        if (uid) {
+          const ref = doc(db, "users", uid, "orders", order.id);
+          const patch = {
+            shippingStatus: type === "shipped" ? "shipped" : "delivered",
+          };
+          if (type === "shipped") {
+            patch.shippedAt = serverTimestamp();
+          } else {
+            patch.deliveredAt = serverTimestamp();
+          }
+          await updateDoc(ref, patch);
+        }
+      } catch (e) {
+        console.error("No se pudo actualizar shippingStatus en Firestore:", e);
       }
 
       alert(`Email "${label}" enviado correctamente.`);
@@ -515,19 +599,21 @@ export default function Cuenta() {
             <div className="flex gap-2 mb-3">
               <button
                 onClick={() => setTab("login")}
-                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "login"
+                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${
+                  tab === "login"
                     ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
                     : "bg-white border-gray-300"
-                  }`}
+                }`}
               >
                 Iniciar sesión
               </button>
               <button
                 onClick={() => setTab("register")}
-                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "register"
+                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${
+                  tab === "register"
                     ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
                     : "bg-white border-gray-300"
-                  }`}
+                }`}
               >
                 Registrarse
               </button>
@@ -682,7 +768,7 @@ export default function Cuenta() {
                   type="text"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Buscar por ID, carta, estado…"
+                  placeholder="Buscar por ID, carta, estado, fecha…"
                   className="w-full sm:w-60 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
                 />
                 <div className="flex items-center gap-2">
@@ -762,17 +848,21 @@ export default function Cuenta() {
                         <td className="px-3 py-2">
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-1 border text-xs rounded-full ${statusBadgeClasses(
-                              o.status
+                              o.status || o.shippingStatus
                             )}`}
                           >
                             <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
-                            {o.status || "—"}
+                            {o.shippingStatus === "shipped"
+                              ? "Enviado"
+                              : o.shippingStatus === "delivered"
+                              ? "Entregado"
+                              : o.status || "Pendiente"}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-right">
                           <button
                             onClick={(e) => {
-                              e.stopPropagation(); // evita abrir dos veces
+                              e.stopPropagation();
                               setOpenOrder(o);
                             }}
                             className="px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#09f202] cursor-pointer text-sm"
@@ -804,9 +894,19 @@ export default function Cuenta() {
                   type="text"
                   value={adminSearch}
                   onChange={(e) => setAdminSearch(e.target.value)}
-                  placeholder="Buscar por cliente, email, ID, estado…"
+                  placeholder="Buscar por cliente, email, uid, ID, estado, fecha…"
                   className="w-full sm:w-72 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
+                <select
+                  className="rounded-lg border border-gray-300 px-2 py-2"
+                  value={adminStatusFilter}
+                  onChange={(e) => setAdminStatusFilter(e.target.value)}
+                >
+                  <option value="all">Todos los estados</option>
+                  <option value="pending">Pendiente</option>
+                  <option value="shipped">Enviado</option>
+                  <option value="delivered">Entregado</option>
+                </select>
               </div>
             </div>
 
@@ -831,7 +931,7 @@ export default function Cuenta() {
                       <th className="text-left font-medium px-3 py-2">Cliente</th>
                       <th className="text-left font-medium px-3 py-2">Fecha</th>
                       <th className="text-left font-medium px-3 py-2">Total</th>
-                      <th className="text-left font-medium px-3 py-2">Estado</th>
+                      <th className="text-left font-medium px-3 py-2">Estado envío</th>
                       <th className="text-right font-medium px-3 py-2">Acciones</th>
                     </tr>
                   </thead>
@@ -840,11 +940,12 @@ export default function Cuenta() {
                       const shortId = o.id.slice(-6).toUpperCase();
                       const customerName = o._user?.name || "(sin nombre)";
                       const customerEmail = o._user?.email || "(sin email)";
+                      const shipMeta = getShippingStatusMeta(o);
+                      const shipped = o.shippingStatus === "shipped" || o.shippingStatus === "delivered";
+                      const delivered = o.shippingStatus === "delivered";
+
                       return (
-                        <tr
-                          key={`${o._user?.uid || "nouid"}-${o.id}`}
-                          className="hover:bg-gray-50"
-                        >
+                        <tr key={`${o._user?.uid || "nouid"}-${o.id}`} className="hover:bg-gray-50">
                           <td className="px-3 py-2 align-top">
                             <div className="font-medium">#{shortId}</div>
                             <div className="text-[11px] text-gray-500 break-all">
@@ -870,12 +971,10 @@ export default function Cuenta() {
                           </td>
                           <td className="px-3 py-2 align-top">
                             <span
-                              className={`inline-flex items-center gap-1 px-2 py-1 border text-xs rounded-full ${statusBadgeClasses(
-                                o.status
-                              )}`}
+                              className={`inline-flex items-center gap-1 px-2 py-1 border text-xs rounded-full ${shipMeta.className}`}
                             >
                               <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
-                              {o.status || "—"}
+                              {shipMeta.label}
                             </span>
                           </td>
                           <td className="px-3 py-2 align-top text-right space-y-1">
@@ -888,13 +987,23 @@ export default function Cuenta() {
                             <div className="flex flex-col sm:flex-row gap-1 mt-1 sm:justify-end">
                               <button
                                 onClick={() => handleAdminEmail(o, "shipped")}
-                                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-xs cursor-pointer"
+                                disabled={shipped}
+                                className={`px-3 py-1.5 rounded-lg text-xs ${
+                                  shipped
+                                    ? "bg-blue-300 text-white opacity-60 cursor-not-allowed"
+                                    : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                                }`}
                               >
                                 Enviado
                               </button>
                               <button
                                 onClick={() => handleAdminEmail(o, "delivered")}
-                                className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs cursor-pointer"
+                                disabled={delivered}
+                                className={`px-3 py-1.5 rounded-lg text-xs ${
+                                  delivered
+                                    ? "bg-emerald-300 text-white opacity-60 cursor-not-allowed"
+                                    : "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                                }`}
                               >
                                 Recibido
                               </button>
@@ -910,7 +1019,7 @@ export default function Cuenta() {
           </div>
         )}
 
-        {/* Modal Detalles Pedido - responsive bottom-sheet en móvil, modal centrado en desktop */}
+        {/* Modal Detalles Pedido */}
         {openOrder && (
           <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center text-black"
@@ -918,20 +1027,13 @@ export default function Cuenta() {
             role="dialog"
             aria-labelledby="order-title"
           >
-            {/* Capa oscura de fondo */}
             <div className="absolute inset-0 bg-black/40" onClick={() => setOpenOrder(null)} />
 
-            {/* Contenedor modal */}
-            <div
-              className="relative w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-lg border border-gray-200
-                            h-[85vh] sm:h-auto sm:max-h-[85vh] overflow-hidden"
-            >
-              {/* Handle / tirador visual en móvil */}
+            <div className="relative w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-lg border border-gray-200 h-[85vh] sm:h-auto sm:max-h-[85vh] overflow-hidden">
               <div className="sm:hidden flex justify-center pt-2">
                 <span className="h-1.5 w-12 rounded-full bg-gray-300" />
               </div>
 
-              {/* Header sticky */}
               <div className="sticky top-0 bg-white border-b border-gray-200 p-4 sm:p-6">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
@@ -960,18 +1062,21 @@ export default function Cuenta() {
                   </button>
                 </div>
 
-                {/* KPIs */}
                 <div className="grid sm:grid-cols-3 gap-3 mt-3">
                   <div className="rounded-lg border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">Estado</div>
+                    <div className="text-xs text-gray-500">Estado pago/envío</div>
                     <div className="mt-0.5">
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-1 border text-xs rounded-full ${statusBadgeClasses(
-                          openOrder.status
+                          openOrder.shippingStatus || openOrder.status
                         )}`}
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
-                        {openOrder.status || "paid"}
+                        {openOrder.shippingStatus === "shipped"
+                          ? "Enviado"
+                          : openOrder.shippingStatus === "delivered"
+                          ? "Entregado"
+                          : openOrder.status || "Pendiente"}
                       </span>
                     </div>
                   </div>
@@ -989,7 +1094,6 @@ export default function Cuenta() {
                 </div>
               </div>
 
-              {/* Contenido scrollable */}
               <div className="overflow-y-auto p-4 sm:p-6 space-y-4">
                 <div className="rounded-lg border border-gray-200">
                   <div className="p-3 border-b flex items-center justify-between">
@@ -1020,23 +1124,16 @@ export default function Cuenta() {
                 </div>
 
                 <div className="text-xs text-gray-500 break-all space-y-1">
-                  <div>
-                    session_id: <code>{openOrder.checkoutSessionId || "—"}</code>
-                  </div>
+                  <div>session_id: <code>{openOrder.checkoutSessionId || "—"}</code></div>
                   {openOrder.source ? (
-                    <div>
-                      source: <code>{openOrder.source}</code>
-                    </div>
+                    <div>source: <code>{openOrder.source}</code></div>
                   ) : null}
                   {openOrder._user?.uid && (
-                    <div>
-                      uid cliente: <code>{openOrder._user.uid}</code>
-                    </div>
+                    <div>uid cliente: <code>{openOrder._user.uid}</code></div>
                   )}
                 </div>
               </div>
 
-              {/* Footer sticky */}
               <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 sm:p-6 flex items-center justify-end gap-2">
                 <button
                   onClick={() => setOpenOrder(null)}
