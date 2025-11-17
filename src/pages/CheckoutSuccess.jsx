@@ -197,7 +197,7 @@ export default function CheckoutSuccess() {
   const isLoading = status === "checking" || status === "finalizing";
 
   return (
-    <div className="min-h-screen bg-red-50 p-4 text-black">
+    <div className="min-h-screen bg-[#242424] p-4 text-black">
       <div className="mx-auto max-w-3xl">
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-6 border-b">
@@ -282,7 +282,7 @@ export default function CheckoutSuccess() {
               </Link>
               <Link
                 to="/cuenta"
-                className="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800"
+                className="px-4 py-2 rounded-lg bg-[#0cd806] text-white hover:bg-[#0ab205]"
               >
                 Ver mis pedidos
               </Link>
@@ -290,7 +290,7 @@ export default function CheckoutSuccess() {
               {status === "error" && (
                 <button
                   onClick={() => window.location.reload()}
-                  className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                  className="px-4 py-2 rounded-lg bg-[red-500] text-white hover:bg-red-600"
                 >
                   Reintentar
                 </button>

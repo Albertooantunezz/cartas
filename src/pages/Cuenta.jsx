@@ -11,6 +11,7 @@ import {
   signOut,
   updateProfile,
   deleteUser,
+  sendEmailVerification,
 } from "firebase/auth";
 
 import {
@@ -119,6 +120,7 @@ export default function Cuenta() {
   // UI
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [info, setInfo] = useState(""); // 👈 NUEVO
 
   // Filtros/orden en pedidos de usuario
   const [q, setQ] = useState("");
@@ -258,6 +260,7 @@ export default function Cuenta() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setErr("");
+    setInfo("");
     setLoading(true);
 
     try {
@@ -267,7 +270,7 @@ export default function Cuenta() {
         setErr("Debes indicar un nombre de usuario.");
         try {
           await deleteUser(cred.user);
-        } catch {}
+        } catch { }
         return;
       }
       const unameKey = uname.toLowerCase();
@@ -289,7 +292,7 @@ export default function Cuenta() {
         }
         try {
           await deleteUser(cred.user);
-        } catch {}
+        } catch { }
         return;
       }
 
@@ -303,6 +306,27 @@ export default function Cuenta() {
         updatedAt: serverTimestamp(),
       });
 
+      // Enviar email de verificación
+      try {
+        await sendEmailVerification(cred.user, {
+          url: window.location.origin + "/cuenta",
+        });
+      } catch (e) {
+        console.error("Error enviando email de verificación:", e);
+      }
+
+      setInfo(
+        "Cuenta creada. Te hemos enviado un email para verificar tu dirección. " +
+        "Confirma tu email antes de iniciar sesión."
+      );
+
+      // 👇 IMPORTANTE: cerrar sesión para que no se quede dentro sin verificar
+      try {
+        await signOut(auth);
+      } catch (e) {
+        console.error("Error al cerrar sesión tras registro:", e);
+      }
+
       setName("");
       setEmail("");
       setPass("");
@@ -314,15 +338,38 @@ export default function Cuenta() {
     }
   };
 
+
   // ===============
   // Inicio de sesión
   // ===============
   const handleLogin = async (e) => {
     e.preventDefault();
     setErr("");
+    setInfo("");
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), pass);
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), pass);
+
+
+      // Si el email no está verificado, no dejamos entrar
+      if (!cred.user.emailVerified) {
+        try {
+          // Reenviamos email de verificación por si acaso
+          await sendEmailVerification(cred.user);
+        } catch (e) {
+          console.error("Error reenviando email de verificación:", e);
+        }
+        // Cerramos sesión inmediatamente
+        try {
+          await signOut(auth);
+        } catch { }
+
+        setErr(
+          "Debes verificar tu email antes de entrar. Revisa tu bandeja de entrada (y spam)."
+        );
+        return;
+      }
+
       setEmail("");
       setPass("");
     } catch (e2) {
@@ -599,25 +646,29 @@ export default function Cuenta() {
             <div className="flex gap-2 mb-3">
               <button
                 onClick={() => setTab("login")}
-                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${
-                  tab === "login"
-                    ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
-                    : "bg-white border-gray-300"
-                }`}
+                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "login"
+                  ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
+                  : "bg-white border-gray-300"
+                  }`}
               >
                 Iniciar sesión
               </button>
               <button
                 onClick={() => setTab("register")}
-                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${
-                  tab === "register"
-                    ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
-                    : "bg-white border-gray-300"
-                }`}
+                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "register"
+                  ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
+                  : "bg-white border-gray-300"
+                  }`}
               >
                 Registrarse
               </button>
             </div>
+
+            {info && (
+              <div className="mb-3 rounded bg-emerald-100 text-emerald-800 px-3 py-2 text-sm">
+                {info}
+              </div>
+            )}
 
             {err && (
               <div className="mb-3 rounded bg-red-100 text-red-800 px-3 py-2 text-sm">
@@ -760,7 +811,7 @@ export default function Cuenta() {
           </div>
 
           {/* Pedidos del usuario */}
-          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-4 overflow-x-auto">
+          <div className=" lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-4 overflow-x-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
               <h2 className="font-semibold">Mis pedidos</h2>
               <div className="flex flex-col sm:flex-row gap-2">
@@ -802,7 +853,7 @@ export default function Cuenta() {
             {filteredOrders.length === 0 ? (
               <div className="text-sm text-gray-600">Aún no tienes pedidos.</div>
             ) : (
-              <div className="overflow-hidden rounded-lg border border-gray-200">
+              <div className="overflow-y-scroll rounded-lg border border-gray-200 h-100">
                 <table className="min-w-full text-sm">
                   <thead className="bg-gray-50 text-gray-600">
                     <tr>
@@ -855,8 +906,8 @@ export default function Cuenta() {
                             {o.shippingStatus === "shipped"
                               ? "Enviado"
                               : o.shippingStatus === "delivered"
-                              ? "Entregado"
-                              : o.status || "Pendiente"}
+                                ? "Entregado"
+                                : o.status || "Pendiente"}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-right">
@@ -923,7 +974,7 @@ export default function Cuenta() {
                 No hay pedidos registrados todavía (o no coinciden con el filtro).
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <div className="overflow-y-scroll rounded-lg border border-gray-200 h-100">
                 <table className="min-w-full text-sm">
                   <thead className="bg-yellow-50 text-gray-700">
                     <tr>
@@ -988,22 +1039,20 @@ export default function Cuenta() {
                               <button
                                 onClick={() => handleAdminEmail(o, "shipped")}
                                 disabled={shipped}
-                                className={`px-3 py-1.5 rounded-lg text-xs ${
-                                  shipped
-                                    ? "bg-blue-300 text-white opacity-60 cursor-not-allowed"
-                                    : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-                                }`}
+                                className={`px-3 py-1.5 rounded-lg text-xs ${shipped
+                                  ? "bg-blue-300 text-white opacity-60 cursor-not-allowed"
+                                  : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                                  }`}
                               >
                                 Enviado
                               </button>
                               <button
                                 onClick={() => handleAdminEmail(o, "delivered")}
                                 disabled={delivered}
-                                className={`px-3 py-1.5 rounded-lg text-xs ${
-                                  delivered
-                                    ? "bg-emerald-300 text-white opacity-60 cursor-not-allowed"
-                                    : "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
-                                }`}
+                                className={`px-3 py-1.5 rounded-lg text-xs ${delivered
+                                  ? "bg-emerald-300 text-white opacity-60 cursor-not-allowed"
+                                  : "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                                  }`}
                               >
                                 Recibido
                               </button>
@@ -1075,8 +1124,8 @@ export default function Cuenta() {
                         {openOrder.shippingStatus === "shipped"
                           ? "Enviado"
                           : openOrder.shippingStatus === "delivered"
-                          ? "Entregado"
-                          : openOrder.status || "Pendiente"}
+                            ? "Entregado"
+                            : openOrder.status || "Pendiente"}
                       </span>
                     </div>
                   </div>
