@@ -4,15 +4,16 @@ import getRawBody from "raw-body";
 import nodemailer from "nodemailer";
 import { db } from "./_lib/firebaseAdmin.js";
 
-export const config = { api: { bodyParser: false } }; // necesario
+export const config = { api: { bodyParser: false } };
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-// Transport de Nodemailer (mismo SMTP que usas en /api/admin/send-order-email)
+// Transport SMTP (igual que en /api/admin/send-order-email)
 const mailTransport = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT || 587),
-  secure: false, // con 587 se usa STARTTLS
+  secure: false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -20,24 +21,15 @@ const mailTransport = nodemailer.createTransport({
 });
 
 /**
- * Envía email automático de "Hemos recibido tu pedido"
- * No lanza error hacia arriba: si falla, solo loguea.
+ * Email de "Hemos recibido tu pedido"
+ * Usa los items del carrito para mostrar nombres de cartas.
  */
-async function sendOrderReceivedEmail({ session, lineItems }) {
+async function sendOrderReceivedEmail({ session, cartItems }) {
   try {
-    console.log("[sendOrderReceivedEmail] Preparando email...");
-
     const to =
       session?.customer_details?.email ||
       session?.customer_email ||
       null;
-
-    console.log("[sendOrderReceivedEmail] to:", to);
-    console.log(
-      "[sendOrderReceivedEmail] SMTP_HOST/USER:",
-      process.env.SMTP_HOST,
-      process.env.SMTP_USER
-    );
 
     if (!to) {
       console.warn(
@@ -48,17 +40,18 @@ async function sendOrderReceivedEmail({ session, lineItems }) {
 
     const from = process.env.MAIL_FROM || process.env.SMTP_USER;
     const orderId = session.id;
-    const totalEUR = (session.amount_total || 0) / 100;
+    const unitEUR = Number(session.metadata?.unitEUR || 0);
     const totalQty = Number(session.metadata?.totalQty || 0);
+    const totalEUR = unitEUR * totalQty;
 
-    const itemsLinesText = (lineItems?.data || [])
-      .map((li) => `${li.quantity}x ${li.description}`)
+    const itemsLinesText = (cartItems || [])
+      .map((it) => `${it.qty}x ${it.name || "(sin nombre)"}`)
       .join("\n");
 
-    const itemsLinesHtml = (lineItems?.data || [])
+    const itemsLinesHtml = (cartItems || [])
       .map(
-        (li) =>
-          `<li><strong>${li.quantity}x</strong> ${li.description}</li>`
+        (it) =>
+          `<li><strong>${it.qty}x</strong> ${it.name || "(sin nombre)"}</li>`
       )
       .join("");
 
@@ -125,11 +118,8 @@ async function sendOrderReceivedEmail({ session, lineItems }) {
       "[stripe-webhook] Error al enviar email de pedido recibido:",
       err
     );
-    // No relanzamos: el webhook debe seguir siendo exitoso
   }
 }
-
-const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Method not allowed");
@@ -145,25 +135,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log("[stripe-webhook] Event type:", event.type);
-
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const uid = session.metadata?.uid;
-      console.log("[stripe-webhook] checkout.session.completed para uid:", uid);
-
       if (!uid) throw new Error("UID ausente en metadata");
 
-      // Line items (opcional, útil para snapshot y para el email)
-      const lineItems = await stripe.checkout.sessions.listLineItems(
-        session.id,
-        { limit: 100 }
-      );
+      const unitEUR = Number(session.metadata?.unitEUR || 0);
+      const totalQty = Number(session.metadata?.totalQty || 0);
+      const totalEUR = unitEUR * totalQty;
 
-      console.log(
-        "[stripe-webhook] lineItems count:",
-        lineItems?.data?.length || 0
-      );
+      // Snap del carrito en Firestore (con tus campos: name, image, eur, qty, etc.)
+      const cartRef = db
+        .collection("users")
+        .doc(uid)
+        .collection("cart");
+
+      const cartSnap = await cartRef.get();
+
+      const cartItems = cartSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
       const orderRef = db
         .collection("users")
@@ -172,49 +164,32 @@ export default async function handler(req, res) {
         .doc(session.id);
 
       const existing = await orderRef.get();
-      console.log(
-        "[stripe-webhook] existing order?",
-        existing.exists ? "sí" : "no"
-      );
 
       if (!existing.exists) {
+        // Aquí dejamos el pedido con una estructura amigable para tu UI
         await orderRef.set({
           createdAt: new Date(),
-          stripeSessionId: session.id,
-          payment_status: session.payment_status,
-          amount_total: session.amount_total,
-          currency: session.currency,
-          unitEUR: Number(session.metadata?.unitEUR || 0),
-          totalQty: Number(session.metadata?.totalQty || 0),
-          items: lineItems.data.map((li) => ({
-            description: li.description,
-            quantity: li.quantity,
-            amount_subtotal: li.amount_subtotal,
-            amount_total: li.amount_total,
-            price: li.price?.id || null,
-          })),
+          checkoutSessionId: session.id,
+          payment_status: session.payment_status, // "paid"
+          amount_total: session.amount_total,      // en cents
+          currency: session.currency,              // "eur"
+          unitEUR,                                 // precio por carta
+          totalQty,                                // unidades totales
+          totalEUR,                                // total en €
+          shippingStatus: "pending",               // estado inicial de envío
+          items: cartItems,                        // mismo formato que tu carrito
         });
 
-        console.log("[stripe-webhook] Pedido creado, vaciando carrito...");
-
-        const cartSnap = await db
-          .collection("users")
-          .doc(uid)
-          .collection("cart")
-          .get();
+        // Vaciar carrito
         const batch = db.batch();
         cartSnap.forEach((doc) => batch.delete(doc.ref));
         await batch.commit();
 
-        console.log(
-          "[stripe-webhook] Carrito vaciado, enviando email de pedido recibido..."
-        );
-
-        // 🚀 Enviar email de "Hemos recibido tu pedido"
-        await sendOrderReceivedEmail({ session, lineItems });
+        // Email al cliente
+        await sendOrderReceivedEmail({ session, cartItems });
       } else {
         console.log(
-          "[stripe-webhook] Pedido ya existía, no se vuelve a crear ni se envía email."
+          "[stripe-webhook] Pedido ya existía, no se recrea ni se envía email."
         );
       }
     }
