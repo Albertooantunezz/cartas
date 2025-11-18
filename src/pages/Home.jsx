@@ -295,7 +295,6 @@ export default function Home() {
         </div>
         {/* ---------- /Importador Moxfield ---------- */}
 
-        <Opinion />
       </div>
 
       {/* =======================
