@@ -12,6 +12,7 @@ import {
   updateProfile,
   deleteUser,
   sendEmailVerification,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 
 import {
@@ -379,6 +380,31 @@ export default function Cuenta() {
     }
   };
 
+  const handleResetPassword = async () => {
+    setErr("");
+    setInfo("");
+
+    const emailTrimmed = email.trim();
+    if (!emailTrimmed) {
+      setErr("Introduce tu email arriba para poder enviarte el enlace.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, emailTrimmed);
+      setInfo(
+        "Te hemos enviado un enlace para restablecer tu contraseña. " +
+        "Revisa tu bandeja de entrada y la carpeta de spam."
+      );
+    } catch (e) {
+      setErr(parseFirebaseErr(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   // ============
   // Cerrar sesión
   // ============
@@ -700,7 +726,16 @@ export default function Cuenta() {
                   placeholder="••••••••"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={handleResetPassword}
+                  disabled={loading}
+                  className="mt-1 text-xs text-gray-600 hover:text-black underline cursor-pointer disabled:opacity-60"
+                >
+                  Olvidé mi contraseña
+                </button>
               </div>
+
               <button
                 type="submit"
                 disabled={loading}
