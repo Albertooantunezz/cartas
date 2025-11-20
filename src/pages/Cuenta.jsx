@@ -1118,7 +1118,7 @@ export default function Cuenta() {
                 No hay pedidos registrados todavía (o no coinciden con el filtro).
               </div>
             ) : (
-              <div className=" rounded-lg border border-gray-200 ">
+              <div className=" rounded-lg border border-gray-200 h-100 overflow-y-scroll">
                 <table className="min-w-full text-sm table-fixed">
                   <thead className="bg-yellow-50 text-gray-700">
                     <tr>
@@ -1130,236 +1130,243 @@ export default function Cuenta() {
                       <th className="text-right font-medium px-3 py-2">Acciones</th>
                     </tr>
                   </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {filteredAdminOrders.map((o) => {
-                        const shortId = o.id.slice(-6).toUpperCase();
-                        const customerName = o._user?.name || "(sin nombre)";
-                        const customerEmail = o._user?.email || "(sin email)";
-                        const shipMeta = getShippingStatusMeta(o);
-                        const shipped = o.shippingStatus === "shipped" || o.shippingStatus === "delivered";
-                        const delivered = o.shippingStatus === "delivered";
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredAdminOrders.map((o) => {
+                      const shortId = o.id.slice(-6).toUpperCase();
+                      const customerName = o._user?.name || "(sin nombre)";
+                      const customerEmail = o._user?.email || "(sin email)";
+                      const shipMeta = getShippingStatusMeta(o);
+                      const shipped = o.shippingStatus === "shipped" || o.shippingStatus === "delivered";
+                      const delivered = o.shippingStatus === "delivered";
 
-                        return (
+                      return (
 
-                          <tr key={`${o._user?.uid || "nouid"}-${o.id}`} className="hover:bg-gray-50">
-                            <td className="px-3 py-2 align-top">
-                              <div className="font-medium">#{shortId}</div>
-                              <div className="text-[11px] text-gray-500 break-all">
-                                session: {o.checkoutSessionId || "—"}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 align-top">
-                              <div className="font-medium truncate max-w-[160px]">
-                                {customerName}
-                              </div>
-                              <div className="text-[11px] text-gray-500 truncate max-w-[180px]">
-                                {customerEmail}
-                              </div>
-                              <div className="text-[10px] text-gray-400">
-                                uid: {o._user?.uid || "—"}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 align-top">
-                              {formatDate(o.createdAt)}
-                            </td>
-                            <td className="px-3 py-2 align-top font-semibold">
-                              {formatMoney(o.totalEUR)}
-                            </td>
-                            <td className="px-3 py-2 align-top">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2 py-1 border text-xs rounded-full ${shipMeta.className}`}
-                              >
-                                <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
-                                {shipMeta.label}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 align-top text-right space-y-1">
+                        <tr key={`${o._user?.uid || "nouid"}-${o.id}`} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 align-top">
+                            <div className="font-medium">#{shortId}</div>
+                            <div className="text-[11px] text-gray-500 break-all">
+                              session: {o.checkoutSessionId || "—"}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 align-top">
+                            <div className="font-medium truncate max-w-[160px]">
+                              {customerName}
+                            </div>
+                            <div className="text-[11px] text-gray-500 truncate max-w-[180px]">
+                              {customerEmail}
+                            </div>
+                            <div className="text-[10px] text-gray-400">
+                              uid: {o._user?.uid || "—"}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 align-top">
+                            {formatDate(o.createdAt)}
+                          </td>
+                          <td className="px-3 py-2 align-top font-semibold">
+                            {formatMoney(o.totalEUR)}
+                          </td>
+                          <td className="px-3 py-2 align-top">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-1 border text-xs rounded-full ${shipMeta.className}`}
+                            >
+                              <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
+                              {shipMeta.label}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 align-top text-right space-y-1">
+                            <button
+                              onClick={() => setOpenOrder(o)}
+                              className="w-full sm:w-auto px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100 text-xs cursor-pointer"
+                            >
+                              Ver detalles
+                            </button>
+                            <div className="flex flex-col sm:flex-row gap-1 mt-1 sm:justify-end">
                               <button
-                                onClick={() => setOpenOrder(o)}
-                                className="w-full sm:w-auto px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100 text-xs cursor-pointer"
+                                onClick={() => handleAdminEmail(o, "shipped")}
+                                disabled={shipped}
+                                className={`px-3 py-1.5 rounded-lg text-xs ${shipped
+                                  ? "bg-blue-300 text-white opacity-60 cursor-not-allowed"
+                                  : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                                  }`}
                               >
-                                Ver detalles
+                                Enviado
                               </button>
-                              <div className="flex flex-col sm:flex-row gap-1 mt-1 sm:justify-end">
-                                <button
-                                  onClick={() => handleAdminEmail(o, "shipped")}
-                                  disabled={shipped}
-                                  className={`px-3 py-1.5 rounded-lg text-xs ${shipped
-                                    ? "bg-blue-300 text-white opacity-60 cursor-not-allowed"
-                                    : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-                                    }`}
-                                >
-                                  Enviado
-                                </button>
-                                <button
-                                  onClick={() => handleAdminEmail(o, "delivered")}
-                                  disabled={delivered}
-                                  className={`px-3 py-1.5 rounded-lg text-xs ${delivered
-                                    ? "bg-emerald-300 text-white opacity-60 cursor-not-allowed"
-                                    : "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
-                                    }`}
-                                >
-                                  Recibido
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                              <button
+                                onClick={() => handleAdminEmail(o, "delivered")}
+                                disabled={delivered}
+                                className={`px-3 py-1.5 rounded-lg text-xs ${delivered
+                                  ? "bg-emerald-300 text-white opacity-60 cursor-not-allowed"
+                                  : "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                                  }`}
+                              >
+                                Recibido
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
 
-                        );
-                      })}
-                    </tbody>
+                      );
+                    })}
+                  </tbody>
                 </table>
-                {/* === Códigos de descuento === */}
-                <div className="mt-8 border-t border-yellow-200 pt-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    Códigos de descuento
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                      Solo admin
-                    </span>
-                  </h3>
-
-                  <div className="flex flex-col md:flex-row md:items-end gap-3 mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {[5, 10, 15, 20, 25].map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => createDiscountCode(p)}
-                          disabled={creatingCode}
-                          className="px-3 py-1.5 rounded-lg text-xs bg-gray-900 text-white hover:bg-gray-800 cursor-pointer disabled:opacity-60"
-                        >
-                          Crear código {p}%
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="1"
-                        max="90"
-                        value={customPercent}
-                        onChange={(e) => setCustomPercent(e.target.value)}
-                        className="w-20 rounded-lg border border-gray-300 px-2 py-1 text-sm"
-                        placeholder="%"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => createDiscountCode(customPercent)}
-                        disabled={creatingCode || !customPercent}
-                        className="px-3 py-1.5 rounded-lg text-xs bg-gray-900 text-white hover:bg-gray-800 cursor-pointer disabled:opacity-60"
-                      >
-                        Crear código personalizado
-                      </button>
-                    </div>
-                  </div>
-
-                  {discountCodesError && (
-                    <div className="mb-3 text-sm text-red-700 bg-red-100 rounded px-3 py-2">
-                      {discountCodesError}
-                    </div>
-                  )}
-
-                  {discountCodesLoading ? (
-                    <div className="text-sm text-gray-600">Cargando códigos…</div>
-                  ) : discountCodes.length === 0 ? (
-                    <div className="text-sm text-gray-600">
-                      Todavía no hay códigos creados.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto rounded-lg border border-gray-200">
-                      <table className="min-w-full text-xs">
-                        <thead className="bg-gray-50 text-gray-700">
-                          <tr>
-                            <th className="px-3 py-2 text-left font-medium">Código</th>
-                            <th className="px-3 py-2 text-left font-medium">% desc.</th>
-                            <th className="px-3 py-2 text-left font-medium">Estado</th>
-                            <th className="px-3 py-2 text-left font-medium">Creado</th>
-                            <th className="px-3 py-2 text-left font-medium">Usado por</th>
-                            <th className="px-3 py-2 text-right font-medium">Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {discountCodes.map((c) => {
-                            const used = !!c.used;
-                            const sent = !!c.sent;
-                            return (
-                              <tr key={c.id}>
-                                <td className="px-3 py-2 font-mono text-[11px]">
-                                  {c.id}
-                                </td>
-                                <td className="px-3 py-2">{c.percent}%</td>
-                                <td className="px-3 py-2">
-                                  <div className="flex flex-col gap-1">
-                                    <span
-                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${used
-                                        ? "bg-red-100 text-red-700 border-red-200"
-                                        : "bg-emerald-100 text-emerald-700 border-emerald-200"
-                                        }`}
-                                    >
-                                      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
-                                      {used ? "Usado" : "Disponible"}
-                                    </span>
-                                    <span
-                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${sent
-                                        ? "bg-blue-100 text-blue-700 border-blue-200"
-                                        : "bg-gray-100 text-gray-700 border-gray-200"
-                                        }`}
-                                    >
-                                      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
-                                      {sent ? "Enviado a cliente" : "Sin enviar"}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="px-3 py-2">
-                                  {formatDate(c.createdAt)}
-                                </td>
-                                <td className="px-3 py-2">
-                                  {c.usedByUid ? (
-                                    <code>{c.usedByUid}</code>
-                                  ) : (
-                                    <span className="text-gray-400">—</span>
-                                  )}
-                                </td>
-                                <td className="px-3 py-2 text-right space-x-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      navigator.clipboard
-                                        ?.writeText(c.id)
-                                        .catch(() => { });
-                                    }}
-                                    className="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 cursor-pointer"
-                                  >
-                                    Copiar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => markCodeSent(c)}
-                                    disabled={sent}
-                                    className={`px-2 py-1 rounded text-xs ${sent
-                                      ? "bg-gray-300 text-white cursor-not-allowed"
-                                      : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-                                      }`}
-                                  >
-                                    Marcar enviado
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-
-
-
               </div>
+
+
+
 
             )}
           </div>
+
         )}
+        {/* === Códigos de descuento === */}
+        {(isAdmin)
+          && (
+
+            <div className="mt-8 border-t border-yellow-200 pt-4 bg-white rounded-xl shadow-sm p-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                Códigos de descuento
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                  Solo admin
+                </span>
+              </h3>
+
+              <div className="flex flex-col md:flex-row md:items-end gap-3 mb-4">
+                <div className="flex flex-wrap gap-2">
+                  {[5, 10, 15, 20, 25].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => createDiscountCode(p)}
+                      disabled={creatingCode}
+                      className="px-3 py-1.5 rounded-lg text-xs bg-gray-900 text-white hover:bg-gray-800 cursor-pointer disabled:opacity-60"
+                    >
+                      Crear código {p}%
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max="90"
+                    value={customPercent}
+                    onChange={(e) => setCustomPercent(e.target.value)}
+                    className="w-20 rounded-lg border border-gray-300 px-2 py-1 text-sm"
+                    placeholder="%"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => createDiscountCode(customPercent)}
+                    disabled={creatingCode || !customPercent}
+                    className="px-3 py-1.5 rounded-lg text-xs bg-gray-900 text-white hover:bg-gray-800 cursor-pointer disabled:opacity-60"
+                  >
+                    Crear código personalizado
+                  </button>
+                </div>
+              </div>
+
+              {discountCodesError && (
+                <div className="mb-3 text-sm text-red-700 bg-red-100 rounded px-3 py-2">
+                  {discountCodesError}
+                </div>
+              )}
+
+              {discountCodesLoading ? (
+                <div className="text-sm text-gray-600">Cargando códigos…</div>
+              ) : discountCodes.length === 0 ? (
+                <div className="text-sm text-gray-600">
+                  Todavía no hay códigos creados.
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-gray-200 h-100">
+                  <table className="min-w-full text-xs">
+                    <thead className="bg-gray-50 text-gray-700">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium">Código</th>
+                        <th className="px-3 py-2 text-left font-medium">% desc.</th>
+                        <th className="px-3 py-2 text-left font-medium">Estado</th>
+                        <th className="px-3 py-2 text-left font-medium">Creado</th>
+                        <th className="px-3 py-2 text-left font-medium">Usado por</th>
+                        <th className="px-3 py-2 text-right font-medium">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {discountCodes.map((c) => {
+                        const used = !!c.used;
+                        const sent = !!c.sent;
+                        return (
+                          <tr key={c.id}>
+                            <td className="px-3 py-2 font-mono text-[11px]">
+                              {c.id}
+                            </td>
+                            <td className="px-3 py-2">{c.percent}%</td>
+                            <td className="px-3 py-2">
+                              <div className="flex flex-col gap-1">
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${used
+                                    ? "bg-red-100 text-red-700 border-red-200"
+                                    : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                    }`}
+                                >
+                                  <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
+                                  {used ? "Usado" : "Disponible"}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${sent
+                                    ? "bg-blue-100 text-blue-700 border-blue-200"
+                                    : "bg-gray-100 text-gray-700 border-gray-200"
+                                    }`}
+                                >
+                                  <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
+                                  {sent ? "Enviado a cliente" : "Sin enviar"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2">
+                              {formatDate(c.createdAt)}
+                            </td>
+                            <td className="px-3 py-2">
+                              {c.usedByUid ? (
+                                <code>{c.usedByUid}</code>
+                              ) : (
+                                <span className="text-gray-400">—</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-right space-x-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard
+                                    ?.writeText(c.id)
+                                    .catch(() => { });
+                                }}
+                                className="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 cursor-pointer"
+                              >
+                                Copiar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => markCodeSent(c)}
+                                disabled={sent}
+                                className={`px-2 py-1 rounded text-xs ${sent
+                                  ? "bg-gray-300 text-white cursor-not-allowed"
+                                  : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                                  }`}
+                              >
+                                Marcar enviado
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+
 
         {/* Modal Detalles Pedido */}
         {openOrder && (
