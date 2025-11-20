@@ -87,6 +87,7 @@ export default async function handler(req, res) {
           images: it.image ? [it.image] : undefined,
           metadata: {
             cardId: it.id,
+            name: it.name || "",              
             set: it.set || "",
             set_name: it.set_name || "",
             collector_number: String(it.collector_number || ""),
@@ -95,6 +96,7 @@ export default async function handler(req, res) {
       },
       quantity: it.qty || 1,
     }));
+
 
     // 5) Origin seguro para success/cancel
     const origin =

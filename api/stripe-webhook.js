@@ -143,10 +143,12 @@ export default async function handler(req, res) {
         session.metadata?.unitEUROriginal || unitEUR
       );
 
-      // Line items desde Stripe
+      // Line items desde Stripe (expandimos product para leer metadata)
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
         limit: 100,
+        expand: ["data.price.product"],
       });
+
 
       const orderRef = db
         .collection("users")
@@ -158,26 +160,70 @@ export default async function handler(req, res) {
 
       // 1) Crear pedido solo si no existe
       if (!existing.exists) {
+        const totalQty = Number(session.metadata?.totalQty || 0);
+        const totalEUR = (session.amount_total || 0) / 100;
+
+        // misma lógica de tramos que en el carrito
+        function tierFromQty(q) {
+          if (q >= 50) return "≥50";
+          if (q >= 40) return "40–49";
+          if (q >= 9) return "9–39";
+          return "≤8";
+        }
+        const tier = tierFromQty(totalQty);
+
         await orderRef.set({
           createdAt: new Date(),
           stripeSessionId: session.id,
+          checkoutSessionId: session.id,           // 👈 útil para buscar luego
           payment_status: session.payment_status,
           amount_total: session.amount_total,
           currency: session.currency,
+
+          // datos de precio/cantidades
+          totalEUR,
+          totalQty,
           unitEUR,
           unitEUROriginal,
-          totalQty: Number(session.metadata?.totalQty || 0),
+          unitPrice: unitEUR,
+          tier,
+
+          // descuento
           discountCode: discountCode || null,
           discountPercent,
-          items: lineItems.data.map((li) => ({
-            description: li.description,
-            quantity: li.quantity,
-            amount_subtotal: li.amount_subtotal,
-            amount_total: li.amount_total,
-            price: li.price?.id || null,
-          })),
+
+          // items normalizados para la UI
+          items: lineItems.data.map((li) => {
+            const product = li.price?.product;
+            const meta =
+              product && typeof product === "object" && product.metadata
+                ? product.metadata
+                : {};
+
+            const name =
+              meta.name ||
+              (typeof product?.name === "string" ? product.name : "") ||
+              li.description ||
+              "";
+
+            const set = meta.set || "";
+            const set_name = meta.set_name || set || "";
+            const collector_number = meta.collector_number || "";
+
+            return {
+              cardId: meta.cardId || null,
+              name,
+              qty: li.quantity || 0,
+              eurRef: unitEUR,
+              set,
+              set_name,
+              collector_number,
+            };
+          }),
+
           shippingStatus: "pending",
         });
+
 
         // Vaciar carrito
         const cartSnap = await db
@@ -255,7 +301,7 @@ export default async function handler(req, res) {
             );
           });
         }
-      }else{
+      } else {
         console.log("Ausente discountCode, no se marca ningún código como usado.");
       }
 
