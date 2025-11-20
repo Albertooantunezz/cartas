@@ -241,10 +241,7 @@ export default function CheckoutSuccess() {
                     <div className="text-xs text-gray-500">Unidades</div>
                     <div className="font-medium">{order.totalQty || (order.items?.reduce?.((s,i)=>s+(i.qty||0),0) || 0)}</div>
                   </div>
-                  <div className="rounded-lg border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">Tarifa por volumen</div>
-                    <div className="font-medium">{order.tier ? `${order.tier} · ${order.unitPrice?.toFixed?.(2)} €` : "—"}</div>
-                  </div>
+
                 </div>
 
                 <div>

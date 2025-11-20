@@ -3,6 +3,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useCart } from "../context/CartContext";
 import ManaText from "../components/ManaText";
 import { getAuth } from "firebase/auth"; // ya usas auth en otras vistas
+import { db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
+
 
 
 const SCRYFALL_API = "https://api.scryfall.com";
@@ -96,6 +99,13 @@ export default function Carrito() {
   const [loadedCards, setLoadedCards] = useState({}); // id -> card
 
   const [isPaying, setIsPaying] = useState(false);
+
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, percent }
+  const [couponError, setCouponError] = useState("");
+  const [couponInfo, setCouponInfo] = useState("");
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+
 
   useEffect(() => {
     const fetchMissingCards = async () => {
@@ -288,6 +298,19 @@ export default function Carrito() {
 
   const subtotal = useMemo(() => totalUnits * unitPrice, [totalUnits, unitPrice]);
 
+  const discountPercent = appliedCoupon?.percent || 0;
+
+  const discountAmount = useMemo(() => {
+    if (!discountPercent) return 0;
+    return subtotal * (discountPercent / 100);
+  }, [subtotal, discountPercent]);
+
+  const totalWithDiscount = useMemo(
+    () => Math.max(0, subtotal - discountAmount),
+    [subtotal, discountAmount]
+  );
+
+
   // ---------- Diálogo de estilos (prints) ----------
   const [printsOpen, setPrintsOpen] = useState(false);
   const [printsLoading, setPrintsLoading] = useState(false);
@@ -399,6 +422,62 @@ export default function Carrito() {
     }
   };
 
+  const handleApplyCoupon = async () => {
+    setCouponError("");
+    setCouponInfo("");
+
+    const raw = couponInput.trim();
+    if (!raw) {
+      setCouponError("Introduce un código.");
+      return;
+    }
+
+    const code = raw.toUpperCase();
+
+    // Si ya está aplicado ese mismo
+    if (appliedCoupon && appliedCoupon.code === code) {
+      setCouponInfo(`Ya se está aplicando el código ${code}.`);
+      return;
+    }
+
+    setCheckingCoupon(true);
+    try {
+      const ref = doc(db, "discountCodes", code);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        setAppliedCoupon(null);
+        setCouponError("Código no válido.");
+        return;
+      }
+
+      const data = snap.data();
+      const percent = Number(data.percent || 0);
+
+      if (!percent || percent <= 0) {
+        setAppliedCoupon(null);
+        setCouponError("Este código no tiene un descuento válido.");
+        return;
+      }
+
+      if (data.used) {
+        setAppliedCoupon(null);
+        setCouponError("Este código ya ha sido utilizado.");
+        return;
+      }
+
+      // Podrías comprobar también data.disabled === true, si quieres tener un flag
+      setAppliedCoupon({ code, percent });
+      setCouponInfo(`Se aplicará un ${percent}% de descuento con el código ${code}.`);
+    } catch (e) {
+      console.error(e);
+      setCouponError("No se pudo comprobar el código. Inténtalo de nuevo.");
+    } finally {
+      setCheckingCoupon(false);
+    }
+  };
+
+
 
 
   return (
@@ -453,8 +532,11 @@ export default function Carrito() {
                       "Content-Type": "application/json",
                       Authorization: `Bearer ${idToken}`,
                     },
-                    body: JSON.stringify({}),
+                    body: JSON.stringify({
+                      discountCode: appliedCoupon?.code || null,
+                    }),
                   });
+
 
                   // lee como texto primero (por si viene HTML)
                   const text = await resp.text();
@@ -522,13 +604,51 @@ export default function Carrito() {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-            <div className="flex items-end">
+            <div className="flex flex-col justify-between gap-2">
               <div className="text-sm text-gray-600">
                 <div>Total unidades: <b>{totalUnits}</b></div>
-                <div>Precio unitario: <b>{unitPrice.toFixed(2)} €</b></div>
+                <div>Precio unitario base: <b>{unitPrice.toFixed(2)} €</b></div>
                 <div>Subtotal: <b>{subtotal.toFixed(2)} €</b></div>
+                {discountPercent > 0 && (
+                  <>
+                    <div>Descuento ({discountPercent}%): <b>-{discountAmount.toFixed(2)} €</b></div>
+                    <div className="font-semibold">
+                      Total con descuento: <b>{totalWithDiscount.toFixed(2)} €</b>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="mt-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Código de descuento
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    className="flex-1 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 uppercase"
+                    placeholder="INTRODUCE TU CÓDIGO"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={checkingCoupon || !couponInput.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-sm hover:bg-gray-800 disabled:opacity-60 cursor-pointer"
+                  >
+                    {checkingCoupon ? "Comprobando…" : "Aplicar"}
+                  </button>
+                </div>
+                {couponInfo && (
+                  <p className="mt-1 text-xs text-emerald-700">{couponInfo}</p>
+                )}
+                {couponError && (
+                  <p className="mt-1 text-xs text-red-700">{couponError}</p>
+                )}
               </div>
             </div>
+
           </div>
         </form>
 
@@ -647,9 +767,18 @@ export default function Carrito() {
         {/* Totales al pie */}
         <div className="mt-4 text-right text-sm text-gray-800">
           <div>Unidades: <b>{totalUnits}</b></div>
-          <div>Precio unitario aplicado: <b>{unitPrice.toFixed(2)} €</b></div>
-          <div className="text-lg">Total: <b>{subtotal.toFixed(2)} €</b></div>
+          <div>Precio unitario base: <b>{unitPrice.toFixed(2)} €</b></div>
+          <div>Subtotal: <b>{subtotal.toFixed(2)} €</b></div>
+          {discountPercent > 0 && (
+            <div>
+              Descuento ({discountPercent}%): <b>-{discountAmount.toFixed(2)} €</b>
+            </div>
+          )}
+          <div className="text-lg">
+            Total a pagar: <b>{totalWithDiscount.toFixed(2)} €</b>
+          </div>
         </div>
+
       </div>
 
       {/* =======================
@@ -731,7 +860,7 @@ export default function Carrito() {
             <div className="px-4 py-3 border-t text-sm text-gray-600">
               Mantendremos la misma cantidad ({printsCard?.qty || 1}) al cambiar de estilo.
             </div>
-          </div>  
+          </div>
         </div>
       )}
     </div>

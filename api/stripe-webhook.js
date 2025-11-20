@@ -7,9 +7,8 @@ import { db } from "./_lib/firebaseAdmin.js";
 export const config = { api: { bodyParser: false } };
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-// Transport SMTP (igual que en /api/admin/send-order-email)
+// Transport SMTP
 const mailTransport = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT || 587),
@@ -20,11 +19,8 @@ const mailTransport = nodemailer.createTransport({
   },
 });
 
-/**
- * Email de "Hemos recibido tu pedido"
- * Usa los items del carrito para mostrar nombres de cartas.
- */
-async function sendOrderReceivedEmail({ session, cartItems }) {
+// Email de "hemos recibido tu pedido"
+async function sendOrderReceivedEmail({ session, lineItems }) {
   try {
     const to =
       session?.customer_details?.email ||
@@ -33,25 +29,24 @@ async function sendOrderReceivedEmail({ session, cartItems }) {
 
     if (!to) {
       console.warn(
-        "[stripe-webhook] No se encontró email de cliente en la sesión, no se envía correo de pedido recibido."
+        "[stripe-webhook] No email de cliente en la sesión, no se envía correo de pedido recibido."
       );
       return;
     }
 
     const from = process.env.MAIL_FROM || process.env.SMTP_USER;
     const orderId = session.id;
-    const unitEUR = Number(session.metadata?.unitEUR || 0);
+    const totalEUR = (session.amount_total || 0) / 100;
     const totalQty = Number(session.metadata?.totalQty || 0);
-    const totalEUR = unitEUR * totalQty;
 
-    const itemsLinesText = (cartItems || [])
-      .map((it) => `${it.qty}x ${it.name || "(sin nombre)"}`)
+    const itemsLinesText = (lineItems?.data || [])
+      .map((li) => `${li.quantity}x ${li.description}`)
       .join("\n");
 
-    const itemsLinesHtml = (cartItems || [])
+    const itemsLinesHtml = (lineItems?.data || [])
       .map(
-        (it) =>
-          `<li><strong>${it.qty}x</strong> ${it.name || "(sin nombre)"}</li>`
+        (li) =>
+          `<li><strong>${li.quantity}x</strong> ${li.description}</li>`
       )
       .join("");
 
@@ -85,11 +80,10 @@ async function sendOrderReceivedEmail({ session, cartItems }) {
         <strong>Unidades:</strong> ${totalQty}</p>
 
         <h2 style="font-size:16px; margin-top:16px;">Detalle de cartas</h2>
-        ${
-          itemsLinesHtml
-            ? `<ul>${itemsLinesHtml}</ul>`
-            : "<p>(Sin detalle disponible)</p>"
-        }
+        ${itemsLinesHtml
+        ? `<ul>${itemsLinesHtml}</ul>`
+        : "<p>(Sin detalle disponible)</p>"
+      }
 
         <p style="margin-top:16px;">
           Te avisaremos de nuevo por email cuando tu pedido sea <strong>enviado</strong>.
@@ -121,6 +115,8 @@ async function sendOrderReceivedEmail({ session, cartItems }) {
   }
 }
 
+const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Method not allowed");
 
@@ -140,22 +136,17 @@ export default async function handler(req, res) {
       const uid = session.metadata?.uid;
       if (!uid) throw new Error("UID ausente en metadata");
 
+      const discountCode = session.metadata?.discountCode || "";
+      const discountPercent = Number(session.metadata?.discountPercent || 0);
       const unitEUR = Number(session.metadata?.unitEUR || 0);
-      const totalQty = Number(session.metadata?.totalQty || 0);
-      const totalEUR = unitEUR * totalQty;
+      const unitEUROriginal = Number(
+        session.metadata?.unitEUROriginal || unitEUR
+      );
 
-      // Snap del carrito en Firestore (con tus campos: name, image, eur, qty, etc.)
-      const cartRef = db
-        .collection("users")
-        .doc(uid)
-        .collection("cart");
-
-      const cartSnap = await cartRef.get();
-
-      const cartItems = cartSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      // Line items desde Stripe
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
+        limit: 100,
+      });
 
       const orderRef = db
         .collection("users")
@@ -165,33 +156,110 @@ export default async function handler(req, res) {
 
       const existing = await orderRef.get();
 
+      // 1) Crear pedido solo si no existe
       if (!existing.exists) {
-        // Aquí dejamos el pedido con una estructura amigable para tu UI
         await orderRef.set({
           createdAt: new Date(),
-          checkoutSessionId: session.id,
-          payment_status: session.payment_status, // "paid"
-          amount_total: session.amount_total,      // en cents
-          currency: session.currency,              // "eur"
-          unitEUR,                                 // precio por carta
-          totalQty,                                // unidades totales
-          totalEUR,                                // total en €
-          shippingStatus: "pending",               // estado inicial de envío
-          items: cartItems,                        // mismo formato que tu carrito
+          stripeSessionId: session.id,
+          payment_status: session.payment_status,
+          amount_total: session.amount_total,
+          currency: session.currency,
+          unitEUR,
+          unitEUROriginal,
+          totalQty: Number(session.metadata?.totalQty || 0),
+          discountCode: discountCode || null,
+          discountPercent,
+          items: lineItems.data.map((li) => ({
+            description: li.description,
+            quantity: li.quantity,
+            amount_subtotal: li.amount_subtotal,
+            amount_total: li.amount_total,
+            price: li.price?.id || null,
+          })),
+          shippingStatus: "pending",
         });
 
         // Vaciar carrito
+        const cartSnap = await db
+          .collection("users")
+          .doc(uid)
+          .collection("cart")
+          .get();
         const batch = db.batch();
         cartSnap.forEach((doc) => batch.delete(doc.ref));
         await batch.commit();
 
-        // Email al cliente
-        await sendOrderReceivedEmail({ session, cartItems });
-      } else {
-        console.log(
-          "[stripe-webhook] Pedido ya existía, no se recrea ni se envía email."
-        );
+        // Email de confirmación
+        await sendOrderReceivedEmail({ session, lineItems });
       }
+
+      // 2) Marcar código como usado SIEMPRE que haya discountCode
+      // Marcar código como usado (si hay)
+      // 2) Marcar código como usado SIEMPRE que haya discountCode
+      if (discountCode) {
+        console.log(
+          "[stripe-webhook] Paso 1 → discountCode recibido:",
+          discountCode
+        );
+
+        const codesRef = db.collection("discountCodes");
+        const qs = await codesRef.where("code", "==", discountCode).limit(1).get();
+
+        console.log(
+          "[stripe-webhook] Paso 2 → nº docs con ese code:",
+          qs.size
+        );
+
+        if (qs.empty) {
+          console.warn(
+            "[stripe-webhook] Paso 3 → Código NO encontrado por campo code:",
+            discountCode
+          );
+        } else {
+          const codeRef = qs.docs[0].ref;
+          console.log(
+            "[stripe-webhook] Paso 3 → ID real del doc encontrado:",
+            codeRef.path
+          );
+
+          await db.runTransaction(async (tx) => {
+            const snap = await tx.get(codeRef);
+            console.log(
+              "[stripe-webhook] Paso 4 → Snapshot existe dentro de la tx:",
+              snap.exists
+            );
+            if (!snap.exists) return;
+
+            const data = snap.data();
+            console.log(
+              "[stripe-webhook] Paso 5 → Valor actual de 'used' antes de update:",
+              data.used
+            );
+
+            if (data.used) {
+              console.log(
+                "[stripe-webhook] Paso 6 → Ya estaba usado, no actualizo."
+              );
+              return;
+            }
+
+            tx.update(codeRef, {
+              used: true,
+              usedAt: new Date(),
+              usedByUid: uid,
+              lastSessionId: session.id,
+            });
+
+            console.log(
+              "[stripe-webhook] Paso 6 → Marcando como usado en la transacción."
+            );
+          });
+        }
+      }else{
+        console.log("Ausente discountCode, no se marca ningún código como usado.");
+      }
+
+
     }
 
     res.json({ received: true });
