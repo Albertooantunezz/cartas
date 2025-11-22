@@ -112,6 +112,26 @@ export default function ConstruirMazo() {
     }
   }, []);
 
+  // ===== AUTO SEARCH WITH DEBOUNCE =====
+  useEffect(() => {
+    // Si el campo está vacío, limpiar resultados inmediatamente
+    if (!searchName.trim()) {
+      setSearchResults([]);
+      setSearchError("");
+      return;
+    }
+
+    // Debounce: esperar 500ms después de que el usuario deje de escribir
+    const timeoutId = setTimeout(() => {
+      searchCards();
+    }, 500);
+
+    // Limpiar el timeout si el usuario sigue escribiendo
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchName]);
+
+
   // ===== HELPERS =====
   const getCardImage = (c, size = "small") => {
     try {
@@ -185,7 +205,7 @@ export default function ConstruirMazo() {
       return;
     }
 
-    // Regla simple de commander: solo 1 comandante
+    // Regla de comandante: solo 1 comandante
     if (category === "commander") {
       const alreadyCommander = deckCards.some(
         (dc) => dc.category === "commander"
@@ -196,10 +216,20 @@ export default function ConstruirMazo() {
       }
     }
 
+    // Verificar si es una tierra básica
+    const typeLine = (card.type_line || "").toLowerCase();
+    const isBasicLand = typeLine.includes("basic") && typeLine.includes("land");
+
     setDeckCards((prev) => {
       const existing = prev.find((dc) => dc.card.id === card.id);
       if (existing) {
-        // sumar cantidad si no nos pasamos del límite
+        // En formato Commander, solo se puede tener 1 copia de cada carta (excepto tierras básicas)
+        if (deckFormat === "commander" && !isBasicLand) {
+          showToast("En formato Commander solo puedes tener 1 copia de cada carta (excepto tierras básicas).");
+          return prev;
+        }
+
+        // Verificar límite del mazo
         const totalWithoutThis = prev.reduce(
           (sum, dc) =>
             dc.card.id === card.id
@@ -212,6 +242,13 @@ export default function ConstruirMazo() {
           showToast(`El mazo ha alcanzado el límite de ${deckLimit} cartas.`);
           return prev;
         }
+
+        // En otros formatos, permitir hasta 4 copias (excepto tierras básicas que no tienen límite)
+        if (deckFormat !== "commander" && !isBasicLand && existing.quantity >= 4) {
+          showToast("Solo puedes tener hasta 4 copias de cada carta (excepto tierras básicas).");
+          return prev;
+        }
+
         return prev.map((dc) =>
           dc.card.id === card.id
             ? { ...dc, quantity: dc.quantity + 1 }
@@ -238,6 +275,23 @@ export default function ConstruirMazo() {
         .map((dc) => {
           if (dc.card.id === cardId) {
             const newQty = dc.quantity + delta;
+
+            // Verificar si es una tierra básica
+            const typeLine = (dc.card.type_line || "").toLowerCase();
+            const isBasicLand = typeLine.includes("basic") && typeLine.includes("land");
+
+            // En formato Commander, solo 1 copia de cada carta (excepto tierras básicas)
+            if (delta > 0 && deckFormat === "commander" && !isBasicLand && newQty > 1) {
+              showToast("En formato Commander solo puedes tener 1 copia de cada carta (excepto tierras básicas).");
+              return dc;
+            }
+
+            // En otros formatos, máximo 4 copias (excepto tierras básicas)
+            if (delta > 0 && deckFormat !== "commander" && !isBasicLand && newQty > 4) {
+              showToast("Solo puedes tener hasta 4 copias de cada carta (excepto tierras básicas).");
+              return dc;
+            }
+
             return newQty > 0 ? { ...dc, quantity: newQty } : dc;
           }
           return dc;
@@ -594,12 +648,39 @@ export default function ConstruirMazo() {
 
       {toast && (
         <div
-          className={`bg-${toast.type === "success" ? "green" : "red"
-            }-600 text-white px-4 py-2 rounded mb-2 fixed top-4 right-4 z-50`}
+          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-slide-down"
+          style={{
+            animation: 'slideDown 0.3s ease-out'
+          }}
         >
-          {toast.message}
+          <div
+            className={`${toast.type === "success"
+              ? "bg-gradient-to-r from-green-500 to-green-600 border-green-400"
+              : "bg-gradient-to-r from-red-500 to-red-600 border-red-400"
+              } text-white px-6 py-3 rounded-lg shadow-2xl border-2 min-w-[300px] max-w-[600px]`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">
+                {toast.type === "success" ? "✅" : "⚠️"}
+              </span>
+              <span className="font-medium text-sm">{toast.message}</span>
+            </div>
+          </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -20px);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+        }
+      `}</style>
 
       {/* Top Bar */}
       <div className="bg-[#1a1a1a] border-b border-gray-700 p-4 sticky top-0 z-20 shadow-md">
@@ -675,23 +756,20 @@ export default function ConstruirMazo() {
         <div className="lg:col-span-3 bg-[#141414] border border-[#0cd806] rounded-xl p-4">
           <h2 className="text-xl font-bold mb-3">Buscar Cartas</h2>
 
-          <div className="flex gap-2 mb-3">
+          <div className="mb-3">
             <input
               type="text"
-              className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
-              placeholder="Nombre de la carta..."
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
+              placeholder="Escribe para buscar cartas..."
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") searchCards();
-              }}
             />
-            <button
-              onClick={searchCards}
-              className="px-3 py-2 bg-[#0cd806] hover:bg-[#09f202] rounded-lg text-sm"
-            >
-              Buscar
-            </button>
+            {searchLoading && (
+              <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                <span className="inline-block animate-spin">⏳</span>
+                Buscando...
+              </div>
+            )}
           </div>
 
           {searchError && (
@@ -733,12 +811,6 @@ export default function ConstruirMazo() {
                 </button>
               </div>
             ))}
-
-            {searchLoading && (
-              <div className="text-center text-sm text-gray-400 py-2">
-                Cargando...
-              </div>
-            )}
 
             {nextPage && !searchLoading && (
               <button
