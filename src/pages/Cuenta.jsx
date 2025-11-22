@@ -771,19 +771,19 @@ export default function Cuenta() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#242424] flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-xl shadow border border-gray-200 text-black">
+        <div className="w-full max-w-md bg-[#141414] rounded-xl shadow border border-[#0cd806] text-white">
           <div className="p-4 border-b">
             <h1 className="text-xl font-bold">Tu cuenta</h1>
-            <p className="text-sm text-gray-600">Accede o crea una cuenta para ver tus pedidos.</p>
+            <p className="text-sm text-gray-400">Accede o crea una cuenta para ver tus pedidos.</p>
           </div>
 
-          <div className="px-4 pt-3 text-black">
+          <div className="px-4 pt-3 text-white">
             <div className="flex gap-2 mb-3">
               <button
                 onClick={() => setTab("login")}
                 className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "login"
                   ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
-                  : "bg-white border-gray-300"
+                  : "bg-[#1a1a1a] border-gray-600 text-white"
                   }`}
               >
                 Iniciar sesión
@@ -792,7 +792,7 @@ export default function Cuenta() {
                 onClick={() => setTab("register")}
                 className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "register"
                   ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
-                  : "bg-white border-gray-300"
+                  : "bg-[#1a1a1a] border-gray-600 text-white"
                   }`}
               >
                 Registrarse
@@ -813,25 +813,25 @@ export default function Cuenta() {
           </div>
 
           {tab === "login" ? (
-            <form onSubmit={handleLogin} className="px-4 pb-4 space-y-3 text-black">
+            <form onSubmit={handleLogin} className="px-4 pb-4 space-y-3 text-white">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
                   placeholder="tu@email.com"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Contraseña</label>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Contraseña</label>
                 <input
                   type="password"
                   value={pass}
                   onChange={(e) => setPass(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
                   placeholder="••••••••"
                   required
                 />
@@ -839,7 +839,7 @@ export default function Cuenta() {
                   type="button"
                   onClick={handleResetPassword}
                   disabled={loading}
-                  className="mt-1 text-xs text-gray-600 hover:text-black underline cursor-pointer disabled:opacity-60"
+                  className="mt-1 text-xs text-gray-400 hover:text-white underline cursor-pointer disabled:opacity-60"
                 >
                   Olvidé mi contraseña
                 </button>
@@ -854,38 +854,38 @@ export default function Cuenta() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleRegister} className="px-4 pb-4 space-y-3 text-black">
+            <form onSubmit={handleRegister} className="px-4 pb-4 space-y-3 text-white">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-xs font-medium text-gray-300 mb-1">
                   Nombre de usuario
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
                   placeholder="Tu nombre (único)"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
                   placeholder="tu@email.com"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Contraseña</label>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Contraseña</label>
                 <input
                   type="password"
                   value={pass}
                   onChange={(e) => setPass(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
                   placeholder="Mínimo 6 caracteres"
                   minLength={6}
                   required
@@ -907,7 +907,7 @@ export default function Cuenta() {
 
   // ---- Autenticado: Dashboard
   return (
-    <div className="min-h-screen bg-[#242424] p-4 text-black">
+    <div className="min-h-screen bg-[#242424] p-4 text-white">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -933,9 +933,9 @@ export default function Cuenta() {
 
         <div className="grid lg:grid-cols-3 gap-4">
           {/* Datos de perfil */}
-          <div className="lg:col-span-1 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <div className="lg:col-span-1 bg-[#141414] rounded-xl border border-[#0cd806] shadow-sm p-4">
             <h2 className="font-semibold mb-2">Datos</h2>
-            <div className="text-sm text-gray-800 space-y-1">
+            <div className="text-sm text-gray-300 space-y-1">
               <div>
                 <span className="text-gray-500">Nombre:</span>{" "}
                 {profile?.name || user.displayName || "—"}
@@ -955,7 +955,7 @@ export default function Cuenta() {
           </div>
 
           {/* Pedidos del usuario */}
-          <div className=" lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-4 overflow-x-auto">
+          <div className=" lg:col-span-2 bg-[#141414] rounded-xl border border-[#0cd806] shadow-sm p-4 overflow-x-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
               <h2 className="font-semibold">Mis pedidos</h2>
               <div className="flex flex-col sm:flex-row gap-2">
@@ -964,11 +964,11 @@ export default function Cuenta() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Buscar por ID, carta, estado, fecha…"
-                  className="w-full sm:w-60 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#09f202]"
+                  className="w-full sm:w-60 rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
                 />
                 <div className="flex items-center gap-2">
                   <select
-                    className="rounded-lg border border-gray-300 px-2 py-2"
+                    className="rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-2 py-2"
                     value={orderByField}
                     onChange={(e) => setOrderByField(e.target.value)}
                   >
@@ -978,7 +978,7 @@ export default function Cuenta() {
                   </select>
                   <button
                     onClick={() => setOrderDir((d) => (d === "asc" ? "desc" : "asc"))}
-                    className="px-2 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#09f202] cursor-pointer"
+                    className="px-2 py-2 rounded-lg border border-gray-600 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white focus:outline-none focus:ring-2 focus:ring-[#0cd806] cursor-pointer"
                     title="Cambiar dirección"
                   >
                     {orderDir === "asc" ? "Asc" : "Desc"}
@@ -997,9 +997,9 @@ export default function Cuenta() {
             {filteredOrders.length === 0 ? (
               <div className="text-sm text-gray-600">Aún no tienes pedidos.</div>
             ) : (
-              <div className="overflow-y-scroll rounded-lg border border-gray-200 h-100">
+              <div className="overflow-y-scroll rounded-lg border border-gray-700 h-100">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-600">
+                  <thead className="bg-[#1a1a1a] text-gray-300">
                     <tr>
                       <th className="text-left font-medium px-3 py-2">Pedido</th>
                       <th className="text-left font-medium px-3 py-2">Fecha</th>
@@ -1009,11 +1009,11 @@ export default function Cuenta() {
                       <th className="text-right font-medium px-3 py-2">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-700">
                     {filteredOrders.map((o) => (
                       <tr
                         key={o.id}
-                        className="hover:bg-gray-50 cursor-pointer"
+                        className="hover:bg-[#1a1a1a] cursor-pointer"
                         onClick={() => setOpenOrder(o)}
                         tabIndex={0}
                         role="button"
@@ -1076,11 +1076,11 @@ export default function Cuenta() {
 
         {/* PANEL ADMIN */}
         {isAdmin && (
-          <div className="mt-8 bg-white rounded-xl border border-yellow-300/60 shadow-sm p-4">
+          <div className="mt-8 bg-[#141414] rounded-xl border border-yellow-600/60 shadow-sm p-4">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
               <h2 className="font-semibold flex items-center gap-2">
                 Panel administrador
-                <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-900/30 text-yellow-300 border border-yellow-700">
                   Todos los pedidos
                 </span>
               </h2>
@@ -1090,10 +1090,10 @@ export default function Cuenta() {
                   value={adminSearch}
                   onChange={(e) => setAdminSearch(e.target.value)}
                   placeholder="Buscar por cliente, email, uid, ID, estado, fecha…"
-                  className="w-full sm:w-72 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  className="w-full sm:w-72 rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
                 <select
-                  className="rounded-lg border border-gray-300 px-2 py-2"
+                  className="rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-2 py-2"
                   value={adminStatusFilter}
                   onChange={(e) => setAdminStatusFilter(e.target.value)}
                 >
@@ -1118,9 +1118,9 @@ export default function Cuenta() {
                 No hay pedidos registrados todavía (o no coinciden con el filtro).
               </div>
             ) : (
-              <div className=" rounded-lg border border-gray-200 h-100 overflow-y-scroll">
+              <div className=" rounded-lg border border-gray-700 h-100 overflow-y-scroll">
                 <table className="min-w-full text-sm table-fixed">
-                  <thead className="bg-yellow-50 text-gray-700">
+                  <thead className="bg-[#1a1a1a] text-gray-300">
                     <tr>
                       <th className="text-left font-medium px-3 py-2">Pedido</th>
                       <th className="text-left font-medium px-3 py-2">Cliente</th>
@@ -1130,7 +1130,7 @@ export default function Cuenta() {
                       <th className="text-right font-medium px-3 py-2">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-700">
                     {filteredAdminOrders.map((o) => {
                       const shortId = o.id.slice(-6).toUpperCase();
                       const customerName = o._user?.name || "(sin nombre)";
@@ -1141,7 +1141,7 @@ export default function Cuenta() {
 
                       return (
 
-                        <tr key={`${o._user?.uid || "nouid"}-${o.id}`} className="hover:bg-gray-50">
+                        <tr key={`${o._user?.uid || "nouid"}-${o.id}`} className="hover:bg-[#1a1a1a]">
                           <td className="px-3 py-2 align-top">
                             <div className="font-medium">#{shortId}</div>
                             <div className="text-[11px] text-gray-500 break-all">
@@ -1176,7 +1176,7 @@ export default function Cuenta() {
                           <td className="px-3 py-2 align-top text-right space-y-1">
                             <button
                               onClick={() => setOpenOrder(o)}
-                              className="w-full sm:w-auto px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100 text-xs cursor-pointer"
+                              className="w-full sm:w-auto px-3 py-1.5 rounded-lg border border-gray-600 hover:bg-[#2a2a2a] text-white text-xs cursor-pointer"
                             >
                               Ver detalles
                             </button>
@@ -1222,10 +1222,10 @@ export default function Cuenta() {
         {(isAdmin)
           && (
 
-            <div className="mt-8 border-t border-yellow-200 pt-4 bg-white rounded-xl shadow-sm p-4">
+            <div className="mt-8 border-t border-yellow-800 pt-4 bg-[#141414] rounded-xl shadow-sm p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 Códigos de descuento
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#1a1a1a] text-gray-300 border border-gray-700">
                   Solo admin
                 </span>
               </h3>
@@ -1251,7 +1251,7 @@ export default function Cuenta() {
                     max="90"
                     value={customPercent}
                     onChange={(e) => setCustomPercent(e.target.value)}
-                    className="w-20 rounded-lg border border-gray-300 px-2 py-1 text-sm"
+                    className="w-20 rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-2 py-1 text-sm"
                     placeholder="%"
                   />
                   <button
@@ -1278,9 +1278,9 @@ export default function Cuenta() {
                   Todavía no hay códigos creados.
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-gray-200 h-100">
+                <div className="overflow-x-auto rounded-lg border border-gray-700 h-100">
                   <table className="min-w-full text-xs">
-                    <thead className="bg-gray-50 text-gray-700">
+                    <thead className="bg-[#1a1a1a] text-gray-300">
                       <tr>
                         <th className="px-3 py-2 text-left font-medium">Código</th>
                         <th className="px-3 py-2 text-left font-medium">% desc.</th>
@@ -1290,7 +1290,7 @@ export default function Cuenta() {
                         <th className="px-3 py-2 text-right font-medium">Acciones</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-gray-700">
                       {discountCodes.map((c) => {
                         const used = !!c.used;
                         const sent = !!c.sent;
@@ -1335,18 +1335,6 @@ export default function Cuenta() {
                             <td className="px-3 py-2 text-right space-x-1">
                               <button
                                 type="button"
-                                onClick={() => {
-                                  navigator.clipboard
-                                    ?.writeText(c.id)
-                                    .catch(() => { });
-                                }}
-                                className="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 cursor-pointer"
-                              >
-                                Copiar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => markCodeSent(c)}
                                 disabled={sent}
                                 className={`px-2 py-1 rounded text-xs ${sent
                                   ? "bg-gray-300 text-white cursor-not-allowed"
@@ -1371,29 +1359,29 @@ export default function Cuenta() {
         {/* Modal Detalles Pedido */}
         {openOrder && (
           <div
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center text-black"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center text-white"
             aria-modal="true"
             role="dialog"
             aria-labelledby="order-title"
           >
             <div className="absolute inset-0 bg-black/40" onClick={() => setOpenOrder(null)} />
 
-            <div className="relative w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-lg border border-gray-200 h-[85vh] sm:h-auto sm:max-h-[85vh] overflow-hidden">
+            <div className="relative w-full sm:max-w-2xl bg-[#141414] rounded-t-2xl sm:rounded-2xl shadow-lg border border-gray-700 h-[85vh] sm:h-auto sm:max-h-[85vh] overflow-hidden">
               <div className="sm:hidden flex justify-center pt-2">
                 <span className="h-1.5 w-12 rounded-full bg-gray-300" />
               </div>
 
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-4 sm:p-6">
+              <div className="sticky top-0 bg-[#141414] border-b border-gray-700 p-4 sm:p-6">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
                     <h3 id="order-title" className="text-lg font-bold truncate">
                       Pedido #{openOrder.id.slice(-6).toUpperCase()}
                     </h3>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-400">
                       Fecha: {formatDate(openOrder.createdAt)}
                     </p>
                     {openOrder._user && (
-                      <p className="text-xs text-gray-500 mt-1 truncate">
+                      <p className="text-xs text-gray-400 mt-1 truncate">
                         Cliente:{" "}
                         <span className="font-medium">
                           {openOrder._user.name || "(sin nombre)"}
@@ -1404,7 +1392,7 @@ export default function Cuenta() {
                   </div>
                   <button
                     onClick={() => setOpenOrder(null)}
-                    className="px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
+                    className="px-2 py-1 rounded-lg border border-gray-600 hover:bg-[#2a2a2a]"
                     aria-label="Cerrar"
                   >
                     ✕
@@ -1412,8 +1400,8 @@ export default function Cuenta() {
                 </div>
 
                 <div className="grid sm:grid-cols-3 gap-3 mt-3">
-                  <div className="rounded-lg border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">Estado pago/envío</div>
+                  <div className="rounded-lg border border-gray-700 p-3">
+                    <div className="text-xs text-gray-400">Estado pago/envío</div>
                     <div className="mt-0.5">
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-1 border text-xs rounded-full ${statusBadgeClasses(
@@ -1429,50 +1417,50 @@ export default function Cuenta() {
                       </span>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">Unidades</div>
+                  <div className="rounded-lg border border-gray-700 p-3">
+                    <div className="text-xs text-gray-400">Unidades</div>
                     <div className="font-medium">
                       {openOrder.totalQty ??
                         (openOrder.items?.reduce?.((s, it) => s + (it.qty || 0), 0) || 0)}
                     </div>
                   </div>
-                  <div className="rounded-lg border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">Total</div>
+                  <div className="rounded-lg border border-gray-700 p-3">
+                    <div className="text-xs text-gray-400">Total</div>
                     <div className="font-medium">{formatMoney(openOrder.totalEUR)}</div>
                   </div>
                 </div>
               </div>
 
               <div className="overflow-y-auto p-4 sm:p-6 space-y-4">
-                <div className="rounded-lg border border-gray-200">
-                  <div className="p-3 border-b flex items-center justify-between">
+                <div className="rounded-lg border border-gray-700">
+                  <div className="p-3 border-b border-gray-700 flex items-center justify-between">
                     <div className="text-sm font-semibold">Artículos</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-400">
                       Tarifa:{" "}
                       {openOrder.tier
                         ? `${openOrder.tier} · ${formatMoney(openOrder.unitPrice || 0)}`
                         : "—"}
                     </div>
                   </div>
-                  <ul className="max-h-72 overflow-auto divide-y divide-gray-200">
+                  <ul className="max-h-72 overflow-auto divide-y divide-gray-700">
                     {(openOrder.items || []).map((it, idx) => (
                       <li key={idx} className="p-3 flex items-center justify-between">
                         <div className="min-w-0">
                           <div className="font-medium text-sm truncate">
                             {it.name || it.cardId}
                           </div>
-                          <div className="text-[11px] text-gray-500 truncate">
+                          <div className="text-[11px] text-gray-400 truncate">
                             {it.set_name || it.set || "—"}{" "}
                             {it.collector_number ? `· #${it.collector_number}` : ""}
                           </div>
                         </div>
-                        <div className="text-sm text-gray-700">x{it.qty || 0}</div>
+                        <div className="text-sm text-gray-300">x{it.qty || 0}</div>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="text-xs text-gray-500 break-all space-y-1">
+                <div className="text-xs text-gray-400 break-all space-y-1">
                   <div>session_id: <code>{openOrder.checkoutSessionId || "—"}</code></div>
                   {openOrder.source ? (
                     <div>source: <code>{openOrder.source}</code></div>
@@ -1483,10 +1471,10 @@ export default function Cuenta() {
                 </div>
               </div>
 
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 sm:p-6 flex items-center justify-end gap-2">
+              <div className="sticky bottom-0 bg-[#141414] border-t border-gray-700 p-4 sm:p-6 flex items-center justify-end gap-2">
                 <button
                   onClick={() => setOpenOrder(null)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                  className="px-4 py-2 rounded-lg border border-gray-600 hover:bg-[#2a2a2a]"
                 >
                   Cerrar
                 </button>

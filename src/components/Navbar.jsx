@@ -6,10 +6,12 @@ import { faUser, faCartShopping } from '@fortawesome/free-solid-svg-icons'
 
 import MenuHam from './MenuHam';
 import { useLocation } from "react-router-dom"; // 👈 Detectar ruta actual
+import { useCart } from "../context/CartContext"; // 👈 Para el contador del carrito
 
 export default function Navbar() {
     const location = useLocation();
     const isHome = location.pathname === "/"; // 👈 Solo consideramos Home la ruta "/"
+    const { totalQty } = useCart(); // 👈 Obtener cantidad total de items en el carrito
 
     // Estado inicial:
     // - En Home: arranca según la posición de scroll (transparente arriba, sólido al bajar).
@@ -70,10 +72,15 @@ export default function Navbar() {
 
                     <a href="/catalogo" className="text-xl text-white
                 transition-colors duration-200 ease-out
-             hover:text-[#07ff00] w-30">Catálogo</a>
+             hover:text-[#07ff00] w-40">Catálogo</a>
 
-                
-                    
+                    <span> | </span>
+
+                    <a href="/construir-mazo" className="text-xl text-white
+                transition-colors duration-200 ease-out
+             hover:text-[#07ff00] w-40">Construir Mazo</a>
+
+
 
                 </div>
 
@@ -87,11 +94,16 @@ export default function Navbar() {
                 <div className="flex items-center gap-10 mr-10 absolute right-0 hidden sm:flex">
                     <a
                         href="/carrito"
-                        className="text-2xl inline-flex h-6 w-6 items-center justify-center text-white
+                        className="text-2xl inline-flex h-6 w-6 items-center justify-center text-white relative
                transition-transform transition-colors duration-200 ease-out
                hover:scale-110 hover:text-[#07ff00]"
                     >
                         <FontAwesomeIcon icon={faCartShopping} />
+                        {totalQty > 0 && (
+                            <span className="absolute -bottom-3 -left-2 bg-[#07ff00] text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                {totalQty}
+                            </span>
+                        )}
                     </a>
 
                     <a

@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------- Helpers ----------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // ADMIN por email (sin toLowerCase, que no existe en reglas)
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email == "alber968968@gmail.com";
+    }
+
+    // ======================
+    // MAZOS (DECK BUILDER)
+    // ======================
+    match /decks/{deckId} {
+      // Permitir lectura si el usuario está autenticado y es el dueño del mazo, o es admin
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      
+      // Permitir crear si el usuario está autenticado y el userId coincide
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      
+      // Permitir actualizar si el usuario está autenticado y es el dueño
+      allow update: if isOwner(resource.data.userId);
+      
+      // Permitir eliminar si el usuario está autenticado y es el dueño, o es admin
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // =======================
+    // PERFIL Y SUBCOLECCIONES
+    // =======================
+
+    match /users/{uid} {
+
+      // Perfil
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isSignedIn() && isOwner(uid);
+      allow update: if isOwner(uid);
+      allow delete: if false;
+
+      // Carrito: users/{uid}/cart/{cardId}
+      match /cart/{cardId} {
+        allow read, write: if isOwner(uid);
+
+        // Validar qty en updates
+        allow update: if isOwner(uid)
+                      && request.resource.data.qty is int
+                      && request.resource.data.qty >= 0;
+      }
+
+      // Pedidos del usuario: users/{uid}/orders/{orderId}
+      match /orders/{orderId} {
+        // El propio usuario o admin pueden leer sus pedidos
+        allow read: if isOwner(uid) || isAdmin();
+
+        // Crear pedido: usuario (desde frontend) o admin (webhook/Admin SDK)
+        allow create: if isOwner(uid) || isAdmin();
+
+        // Actualizar pedido (p.ej. status "shipped"/"delivered"): solo admin
+        allow update: if isAdmin();
+
+        // Nunca borrar pedidos desde cliente
+        allow delete: if false;
+      }
+    }
+
+    // ======================
+    // USERNAMES (registro)
+    // ======================
+    match /usernames/{username} {
+      // permitir leer un username concreto (para la transacción)
+      allow get, create: if isSignedIn();
+
+      // no permitir listar todos ni modificar/borrar
+      allow list, update, delete: if false;
+    }
+
+    // =========================================
+    // LECTURA GLOBAL DE PEDIDOS PARA EL ADMIN
+    // (para collectionGroup("orders") en tu panel)
+    // =========================================
+    match /{path=**}/orders/{orderId} {
+      // Solo admin puede leer todos los pedidos
+      allow read: if isAdmin();
+      // Nada más desde el cliente
+      allow write: if false;
+    }
+    
+    // ======================
+    // CÓDIGOS DE DESCUENTO
+    // ======================
+    match /discountCodes/{code} {
+      // Cualquier usuario logueado puede comprobar un código concreto
+      allow get: if isSignedIn();
+
+      // Solo admin puede listar / crear / actualizar / borrar códigos
+      allow list, create, update, delete: if isAdmin();
+    }
+
+  }
+}

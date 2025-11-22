@@ -9,6 +9,7 @@ import Catalogo from "../pages/Catalogo";
 import Cuenta from "../pages/Cuenta";
 import CheckoutSuccess from "../pages/CheckoutSuccess";
 import CheckoutCancel from "../pages/CheckoutCancel";
+import ConstruirMazo from "../pages/ConstruirMazo";
 
 export default function AppRoutes() {
   return (
@@ -19,6 +20,7 @@ export default function AppRoutes() {
         <Route path="/carrito" element={<CartPage />} />
         <Route path="/catalogo" element={<Catalogo />} />
         <Route path="/cuenta" element={<Cuenta />} />
+        <Route path="/construir-mazo" element={<ConstruirMazo />} />
         <Route path="*" element={<NotFound />} />
 
         {/* ✅ rutas nuevas para Stripe */}

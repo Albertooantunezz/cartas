@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { faBars, faUser, faCartShopping, faPerson, faPersonDress } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useCart } from "../context/CartContext"; // 👈 Para el contador del carrito
 
 export default function MenuHam() {
 
+    const { totalQty } = useCart(); // 👈 Obtener cantidad total de items en el carrito
     const [isOpen, setIsOpen] = useState(false);
 
     const toggleMenu = () => {
@@ -28,23 +30,27 @@ export default function MenuHam() {
                 <p className="hover:scale-105 duration-200 text-2xl"><FontAwesomeIcon icon={faBars} /></p>
             </button>
             <div
-                className={`fixed top-0 right-0 h-full w-50 bg-red-500 shadow-md flex flex-col gap-8 p-5 transform transition-transform duration-300 ease-in-out z-5
+                className={`fixed top-0 right-0 h-full w-64 bg-[#141414] border-l border-[#0cd806] shadow-md flex flex-col gap-6 p-6 transform transition-transform duration-300 ease-in-out z-50
           ${isOpen && !manisOpen && !womenisOpen ? "translate-x-0" : "translate-x-full"}`}
             >
-                <button className=" mt-15 flex justify-between ">
-                    <a href="/catalogo">Catalogo</a>
+                <button className="mt-16 flex justify-between text-white text-lg font-semibold hover:text-[#0cd806] transition-colors">
+                    <a href="/catalogo">Catálogo</a>
                 </button>
 
-                <button className="flex justify-between">
-                    <p> Construye tu mazo </p>
-                    <p>{">"}</p>
+                <button className="flex justify-between text-white text-lg font-semibold hover:text-[#0cd806] transition-colors">
+                    <a href="/construir-mazo">Construir Mazo</a>
                 </button>
 
-                <a href="/cuenta" className="hover:text-red-300">
+                <a href="/cuenta" className="text-white text-lg font-semibold hover:text-[#0cd806] transition-colors flex items-center gap-3">
                     <FontAwesomeIcon icon={faUser} /> Cuenta
                 </a>
-                <a href="/carrito" className="hover:text-red-300">
+                <a href="/carrito" className="text-white text-lg font-semibold hover:text-[#0cd806] transition-colors relative inline-flex items-center gap-3">
                     <FontAwesomeIcon icon={faCartShopping} /> Carrito
+                    {totalQty > 0 && (
+                        <span className="bg-[#0cd806] text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                            {totalQty}
+                        </span>
+                    )}
                 </a>
             </div>
 

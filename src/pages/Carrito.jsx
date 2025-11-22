@@ -592,20 +592,20 @@ export default function Carrito() {
         </div>
 
         {/* Filtros */}
-        <form className="mb-4 rounded-xl border border-gray-200 bg-white shadow-sm px-4 py-3" onSubmit={(e) => e.preventDefault()}>
+        <form className="mb-4 rounded-xl border border-[#0cd806] bg-[#141414] shadow-sm px-4 py-3" onSubmit={(e) => e.preventDefault()}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Buscar en el carrito</label>
+              <label className="block text-xs font-medium text-gray-300 mb-1">Buscar en el carrito</label>
               <input
                 type="text"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
+                className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
                 placeholder="Nombre, colección o código de set…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
             <div className="flex flex-col justify-between gap-2">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-300">
                 <div>Total unidades: <b>{totalUnits}</b></div>
                 <div>Precio unitario base: <b>{unitPrice.toFixed(2)} €</b></div>
                 <div>Subtotal: <b>{subtotal.toFixed(2)} €</b></div>
@@ -620,7 +620,7 @@ export default function Carrito() {
               </div>
 
               <div className="mt-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-xs font-medium text-gray-300 mb-1">
                   Código de descuento
                 </label>
                 <div className="flex gap-2">
@@ -628,7 +628,7 @@ export default function Carrito() {
                     type="text"
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value)}
-                    className="flex-1 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 uppercase"
+                    className="flex-1 rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#0cd806] uppercase"
                     placeholder="INTRODUCE TU CÓDIGO"
                   />
                   <button
@@ -653,10 +653,10 @@ export default function Carrito() {
         </form>
 
         {/* Grid con scroll */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-[#0cd806] bg-[#141414] shadow-sm">
           <div className="max-h-[65vh] overflow-auto p-3">
             {filteredItems.length === 0 ? (
-              <div className="text-sm text-gray-600 p-4">No hay cartas que coincidan con el filtro.</div>
+              <div className="text-sm text-gray-300 p-4">No hay cartas que coincidan con el filtro.</div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {[...filteredItems]
@@ -675,11 +675,11 @@ export default function Carrito() {
 
                     if (!card || !card.id) {
                       return (
-                        <div key={idGuess || Math.random()} className="relative rounded-lg overflow-hidden shadow bg-white border border-gray-200">
+                        <div key={idGuess || Math.random()} className="relative rounded-lg overflow-hidden shadow bg-[#1a1a1a] border border-gray-700">
                           <div className="w-full h-[200px] bg-gray-200 flex items-center justify-center text-gray-500">
                             Cargando datos…
                           </div>
-                          <div className="px-2 py-1 text-xs text-gray-600">ID: {idGuess || "—"}</div>
+                          <div className="px-2 py-1 text-xs text-gray-400">ID: {idGuess || "—"}</div>
                         </div>
                       );
                     }
@@ -690,7 +690,7 @@ export default function Carrito() {
                     return (
                       <div
                         key={card.id || `${card.oracle_id}-fallback`}
-                        className="relative group rounded-lg overflow-hidden shadow hover:shadow-md bg-white border border-gray-200 c"
+                        className="relative group rounded-lg overflow-hidden shadow hover:shadow-md bg-[#1a1a1a] border border-gray-700 c"
                       >
                         {/* Imagen clickable → abre estilos */}
                         <button
@@ -703,7 +703,7 @@ export default function Carrito() {
                             <img
                               src={img}
                               alt={card?.name || "Carta"}
-                              className="w-full h-[200px] object-contain p-2 bg-gray-50"
+                              className="w-full h-[200px] object-contain p-2 bg-gray-800"
                               loading="lazy"
                             />
                           ) : (
@@ -715,11 +715,11 @@ export default function Carrito() {
 
                         {/* Info corta */}
                         <div className="px-2 py-1">
-                          <div className="text-xs text-gray-700 font-medium truncate" title={card?.name || ""}>
+                          <div className="text-xs text-white font-medium truncate" title={card?.name || ""}>
                             {card?.name || "—"}
                           </div>
                           <div
-                            className="text-[11px] text-gray-500 truncate"
+                            className="text-[11px] text-gray-400 truncate"
                             title={`${card.set_name} (${card.set?.toUpperCase()}) #${card.collector_number}`}
                           >
                             {card.set_name} ({card.set?.toUpperCase()}) · #{card.collector_number}
@@ -765,7 +765,7 @@ export default function Carrito() {
         </div>
 
         {/* Totales al pie */}
-        <div className="mt-4 text-right text-sm text-gray-800">
+        <div className="mt-4 text-right text-sm text-white">
           <div>Unidades: <b>{totalUnits}</b></div>
           <div>Precio unitario base: <b>{unitPrice.toFixed(2)} €</b></div>
           <div>Subtotal: <b>{subtotal.toFixed(2)} €</b></div>

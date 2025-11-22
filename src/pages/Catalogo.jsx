@@ -469,16 +469,16 @@ export default function Catalogo() {
 
       {/* Dialog de detalle */}
       {openDialog && selectedCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 text-white">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setOpenDialog(false)} />
-          <div className="relative bg-[#141414] rounded-xl shadow-xl max-w-4xl w-full overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setOpenDialog(false)}>
+          <div className="bg-[#141414] border border-[#0cd806] rounded-xl shadow-xl max-w-4xl w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col md:flex-row">
               {/* Imagen grande sin recorte */}
-              <div className="md:w-1/2 flex items-center justify-center p-3">
+              {/* Imagen grande */}
+              <div className="md:w-1/2 flex items-center justify-center p-3 bg-[#1a1a1a]">
                 <img
                   src={getCardImage(selectedCard, "large") || getCardImage(selectedCard, "normal")}
                   alt={selectedCard.name}
-                  className="rounded-lg sm:rounded-xl h-60 sm:h-100"
+                  className="rounded-lg max-h-[500px]"
                 />
               </div>
 
@@ -488,7 +488,7 @@ export default function Catalogo() {
                   <h2 className="text-xl font-bold">{selectedCard.name}</h2>
 
                   <button
-                    className="text-gray-500 hover:text-gray-700 cursor-pointer text-2xl leading-none"
+                    className="text-gray-500 hover:text-gray-300 cursor-pointer text-2xl leading-none"
                     onClick={() => setOpenDialog(false)}
                     aria-label="Cerrar"
                   >
@@ -508,8 +508,9 @@ export default function Catalogo() {
 
                 </div>
 
-                <div className="text-sm bg-[#09f202] p-2 rounded">
-                  <ManaText text={getOracleText(selectedCard) || "Sin texto de reglas."} size="md" />
+                <div className="text-sm bg-[#242424] p-3 rounded">
+                  <div className="font-semibold mb-1">Texto de Reglas:</div>
+                  <ManaText text={getOracleText(selectedCard) || "Sin texto de reglas."} size="sm" />
                 </div>
 
 
