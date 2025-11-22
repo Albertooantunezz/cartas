@@ -75,6 +75,7 @@ export default function ConstruirMazo() {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [buttonError, setButtonError] = useState(null); // no usado de momento
   const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
+  const [isLoaded, setIsLoaded] = useState(false); // Flag para saber si ya se cargaron los datos
 
   const showToast = (message, type = "error") => {
     setToast({ message, type });
@@ -85,17 +86,7 @@ export default function ConstruirMazo() {
   const { add: addToCart } = useCart();
 
   // ===== LOCAL STORAGE PERSISTENCE =====
-  useEffect(() => {
-    const deckData = {
-      name: deckName,
-      format: deckFormat,
-      description: deckDescription,
-      cards: deckCards,
-      deckId: currentDeckId,
-    };
-    localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deckData));
-  }, [deckName, deckFormat, deckDescription, deckCards, currentDeckId]);
-
+  // Cargar datos al montar el componente (solo una vez)
   useEffect(() => {
     const savedData = localStorage.getItem(DECK_STORAGE_KEY);
     if (savedData) {
@@ -110,7 +101,22 @@ export default function ConstruirMazo() {
         console.error("Error loading deck from localStorage:", err);
       }
     }
+    setIsLoaded(true); // Marcar como cargado
   }, []);
+
+  // Guardar datos cada vez que cambien (solo después de cargar)
+  useEffect(() => {
+    if (!isLoaded) return; // No guardar hasta que se hayan cargado los datos
+
+    const deckData = {
+      name: deckName,
+      format: deckFormat,
+      description: deckDescription,
+      cards: deckCards,
+      deckId: currentDeckId,
+    };
+    localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deckData));
+  }, [deckName, deckFormat, deckDescription, deckCards, currentDeckId, isLoaded]);
 
   // ===== AUTO SEARCH WITH DEBOUNCE =====
   useEffect(() => {
@@ -362,7 +368,7 @@ export default function ConstruirMazo() {
 
       if (failedCount === 0) {
         showToast(
-          `✅ Todas las cartas han sido añadidas al carrito (${addedCount} cartas).`,
+          `Todas las cartas han sido añadidas al carrito (${addedCount} cartas).`,
           "success"
         );
       } else {
