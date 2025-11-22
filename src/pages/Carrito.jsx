@@ -5,6 +5,7 @@ import ManaText from "../components/ManaText";
 import { getAuth } from "firebase/auth"; // ya usas auth en otras vistas
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import SEO from "../components/SEO";
 
 
 
@@ -480,8 +481,14 @@ export default function Carrito() {
 
 
 
+
+
   return (
     <div className="min-h-screen bg-[#242424] p-4">
+      <SEO
+        title="Carrito de Compras - Tienda de Cartas"
+        description="Revisa los artículos en tu carrito y finaliza tu compra."
+      />
       <div className="mx-auto max-w-7xl">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-white">Carrito</h1>

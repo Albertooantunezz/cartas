@@ -7,6 +7,7 @@ import { useCart } from "../context/CartContext";
 import { auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import ManaText from "../components/ManaText";
+import SEO from "../components/SEO";
 
 
 
@@ -199,8 +200,14 @@ export default function Home() {
     setDetailLoading(false);
   };
 
+
+
   return (
     <div className="relative top-0 w-full flex flex-col items-center justify-center">
+      <SEO
+        title="Inicio - Tienda de Cartas"
+        description="Bienvenido a la mejor tienda de cartas Magic. Explora nuestro catálogo y construye tu mazo."
+      />
       <div className="relative">
         <img src="/banner.jpg" alt="Banner Home" className="w-2000 h-140 object-cover opacity-70" />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white  w-full  text-center">
@@ -215,11 +222,9 @@ export default function Home() {
 
       <div className="text-center bg-black-800 w-full p-10 shadow-lg text-white md:px-20 lg:px-60">
         <h2 className="text-2xl font-bold ">Bienvenido a la tienda</h2>
-        <span className="w-full bg-[#0cd806] h-1 block mt-5 rounded-xl"></span>
-        <p className="lg:text-xl mt-10">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Provident pariatur iure officia alias quam impedit
-          excepturi qui necessitatibus. Accusantium magni quasi rem voluptates provident repellat iste commodi laborum?
-          Obcaecati, maxime!
+        <span className="w-full bg-[#0cd806] h-1 block mt-5 mb-5 rounded-xl"></span>
+        <p className="text-lg">
+          Descubre la mejor selección de Proxys al mejor precio. En nuestra tienda encontrarás desde las últimas novedades hasta joyas clásicas para completar tu colección. Utiliza nuestro constructor de mazos avanzado para diseñar tu estrategia ganadora y adquiere todas las cartas que necesitas con un solo clic. ¡Únete a nuestra comunidad y lleva tu juego al siguiente nivel!
         </p>
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-4 mt-10">

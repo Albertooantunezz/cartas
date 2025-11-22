@@ -2,13 +2,23 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../context/CartContext";
 import ManaText from "../components/ManaText";
 import { db, auth } from "../firebase";
-import { collection, addDoc, updateDoc, deleteDoc, doc, query, where, getDocs, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  getDocs,
+  serverTimestamp,
+} from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import SEO from "../components/SEO";
 
 const SCRYFALL_API = "https://api.scryfall.com";
 const DECK_STORAGE_KEY = "currentDeck";
 
-// Límites de cartas por formato
 const DECK_LIMITS = {
   commander: 100,
   standard: 60,
@@ -36,6 +46,8 @@ export default function ConstruirMazo() {
   const [currentDeckId, setCurrentDeckId] = useState(null);
   const [savedDecks, setSavedDecks] = useState([]);
 
+  const deckLimit = DECK_LIMITS[deckFormat] || 60;
+
   // ===== SEARCH STATE =====
   const [searchName, setSearchName] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -61,12 +73,18 @@ export default function ConstruirMazo() {
   const [showCardDetail, setShowCardDetail] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [buttonError, setButtonError] = useState(null); // no usado de momento
+  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
+
+  const showToast = (message, type = "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // ===== CART INTEGRATION =====
   const { add: addToCart } = useCart();
 
   // ===== LOCAL STORAGE PERSISTENCE =====
-  // Guardar mazo en localStorage cuando cambie
   useEffect(() => {
     const deckData = {
       name: deckName,
@@ -78,7 +96,6 @@ export default function ConstruirMazo() {
     localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deckData));
   }, [deckName, deckFormat, deckDescription, deckCards, currentDeckId]);
 
-  // Cargar mazo desde localStorage al montar
   useEffect(() => {
     const savedData = localStorage.getItem(DECK_STORAGE_KEY);
     if (savedData) {
@@ -114,14 +131,15 @@ export default function ConstruirMazo() {
     return "";
   };
 
-  const getCMC = (c) => {
-    return c.cmc || 0;
-  };
+  const getCMC = (c) => c.cmc || 0;
 
   const getOracleText = (c) => {
     if (c?.oracle_text) return c.oracle_text;
     if (Array.isArray(c?.card_faces)) {
-      return c.card_faces.map((f) => f.oracle_text).filter(Boolean).join("\n—\n");
+      return c.card_faces
+        .map((f) => f.oracle_text)
+        .filter(Boolean)
+        .join("\n—\n");
     }
     return "";
   };
@@ -129,7 +147,11 @@ export default function ConstruirMazo() {
   const categorizeCard = (card) => {
     const typeLine = (card.type_line || "").toLowerCase();
 
-    if (typeLine.includes("legendary") && typeLine.includes("creature") && deckFormat === "commander") {
+    if (
+      typeLine.includes("legendary") &&
+      typeLine.includes("creature") &&
+      deckFormat === "commander"
+    ) {
       return "commander";
     }
     if (typeLine.includes("creature")) return "creatures";
@@ -144,8 +166,352 @@ export default function ConstruirMazo() {
 
   const getCardColors = (card) => {
     if (card.colors && card.colors.length > 0) return card.colors;
-    if (card.color_identity && card.color_identity.length > 0) return card.color_identity;
+    if (card.color_identity && card.color_identity.length > 0)
+      return card.color_identity;
     return [];
+  };
+
+  // ===== DECK MANIPULATION =====
+  const addCardToDeck = (card) => {
+    const category = categorizeCard(card);
+    const currentTotal = deckCards.reduce(
+      (sum, dc) => sum + (Number(dc.quantity) || 0),
+      0
+    );
+
+    // Límite de cartas del mazo
+    if (currentTotal >= deckLimit) {
+      showToast(`El mazo ha alcanzado el límite de ${deckLimit} cartas.`);
+      return;
+    }
+
+    // Regla simple de commander: solo 1 comandante
+    if (category === "commander") {
+      const alreadyCommander = deckCards.some(
+        (dc) => dc.category === "commander"
+      );
+      if (alreadyCommander) {
+        showToast("Ya tienes un comandante en el mazo.");
+        return;
+      }
+    }
+
+    setDeckCards((prev) => {
+      const existing = prev.find((dc) => dc.card.id === card.id);
+      if (existing) {
+        // sumar cantidad si no nos pasamos del límite
+        const totalWithoutThis = prev.reduce(
+          (sum, dc) =>
+            dc.card.id === card.id
+              ? sum
+              : sum + (Number(dc.quantity) || 0),
+          0
+        );
+        const maxAdd = deckLimit - totalWithoutThis;
+        if (existing.quantity >= maxAdd) {
+          showToast(`El mazo ha alcanzado el límite de ${deckLimit} cartas.`);
+          return prev;
+        }
+        return prev.map((dc) =>
+          dc.card.id === card.id
+            ? { ...dc, quantity: dc.quantity + 1 }
+            : dc
+        );
+      }
+      return [...prev, { card, quantity: 1, category }];
+    });
+  };
+
+  const updateCardQuantity = (cardId, delta) => {
+    const currentTotal = deckCards.reduce(
+      (sum, dc) => sum + (Number(dc.quantity) || 0),
+      0
+    );
+
+    if (delta > 0 && currentTotal >= deckLimit) {
+      showToast(`El mazo ha alcanzado el límite de ${deckLimit} cartas.`);
+      return;
+    }
+
+    setDeckCards((prev) =>
+      prev
+        .map((dc) => {
+          if (dc.card.id === cardId) {
+            const newQty = dc.quantity + delta;
+            return newQty > 0 ? { ...dc, quantity: newQty } : dc;
+          }
+          return dc;
+        })
+        .filter((dc) => dc.quantity > 0)
+    );
+  };
+
+  const removeCardFromDeck = (cardId) => {
+    setDeckCards((prev) => prev.filter((dc) => dc.card.id !== cardId));
+  };
+
+  const clearDeck = () => {
+    if (window.confirm("¿Estás seguro de que quieres vaciar el mazo?")) {
+      setDeckCards([]);
+      setDeckName("Mi Mazo");
+      setDeckDescription("");
+      setCurrentDeckId(null);
+    }
+  };
+
+  const openCardDetail = async (card) => {
+    if (!card.oracle_text && card.id) {
+      try {
+        const res = await fetch(`${SCRYFALL_API}/cards/${card.id}`);
+        if (res.ok) {
+          const fullCard = await res.json();
+          setSelectedCard(fullCard);
+          setShowCardDetail(true);
+          return;
+        }
+      } catch (err) {
+        console.error("Error fetching card details:", err);
+      }
+    }
+    setSelectedCard(card);
+    setShowCardDetail(true);
+  };
+
+  const addAllDeckToCart = async () => {
+    if (deckCards.length === 0) {
+      showToast("El mazo está vacío.");
+      return;
+    }
+
+    setIsAddingToCart(true);
+
+    try {
+      let addedCount = 0;
+      let failedCount = 0;
+
+      for (const dc of deckCards) {
+        try {
+          const res = await fetch(`${SCRYFALL_API}/cards/${dc.card.id}`);
+          if (res.ok) {
+            const fullCard = await res.json();
+            await addToCart(fullCard, dc.quantity);
+            addedCount += dc.quantity;
+          } else {
+            failedCount += dc.quantity;
+            console.error(`Failed to fetch ${dc.card.name}`);
+          }
+        } catch (err) {
+          failedCount += dc.quantity;
+          console.error(`Error adding ${dc.card.name}:`, err);
+        }
+      }
+
+      if (failedCount === 0) {
+        showToast(
+          `✅ Todas las cartas han sido añadidas al carrito (${addedCount} cartas).`,
+          "success"
+        );
+      } else {
+        showToast(
+          `⚠️ Se añadieron ${addedCount} cartas al carrito. ${failedCount} cartas no pudieron añadirse.`,
+          "error"
+        );
+      }
+    } catch (err) {
+      showToast("❌ Error al añadir cartas al carrito: " + err.message);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  // ===== DECK PERSISTENCE (FIRESTORE) =====
+  const saveDeck = async () => {
+    if (!user) {
+      showToast("Debes iniciar sesión para guardar mazos.");
+      return;
+    }
+
+    try {
+      const deckData = {
+        userId: user.uid,
+        name: deckName,
+        format: deckFormat,
+        description: deckDescription,
+        cards: deckCards.map((dc) => ({
+          cardId: dc.card.id,
+          name: dc.card.name,
+          quantity: dc.quantity,
+          category: dc.category,
+          imageUrl: getCardImage(dc.card, "small"),
+          manaCost: getManaCost(dc.card),
+          cmc: getCMC(dc.card),
+          typeLine: dc.card.type_line,
+          colors: getCardColors(dc.card),
+        })),
+        updatedAt: serverTimestamp(),
+      };
+
+      if (currentDeckId) {
+        await updateDoc(doc(db, "decks", currentDeckId), deckData);
+        showToast("✅ Mazo actualizado correctamente.", "success");
+      } else {
+        deckData.createdAt = serverTimestamp();
+        const docRef = await addDoc(collection(db, "decks"), deckData);
+        setCurrentDeckId(docRef.id);
+        showToast("✅ Mazo guardado correctamente.", "success");
+      }
+
+      loadUserDecks();
+    } catch (err) {
+      console.error("Error saving deck:", err);
+      showToast("❌ Error al guardar el mazo: " + err.message);
+    }
+  };
+
+  const loadUserDecks = async () => {
+    if (!user) return;
+
+    try {
+      const q = query(
+        collection(db, "decks"),
+        where("userId", "==", user.uid)
+      );
+      const querySnapshot = await getDocs(q);
+      const decks = [];
+      querySnapshot.forEach((d) => {
+        decks.push({ id: d.id, ...d.data() });
+      });
+      setSavedDecks(decks);
+    } catch (err) {
+      console.error("Error loading decks:", err);
+    }
+  };
+
+  const loadDeck = (deck) => {
+    setDeckName(deck.name);
+    setDeckFormat(deck.format);
+    setDeckDescription(deck.description || "");
+    setCurrentDeckId(deck.id);
+
+    setDeckCards(
+      (deck.cards || []).map((cardData) => ({
+        card: {
+          id: cardData.cardId,
+          name: cardData.name,
+          image_uris: { small: cardData.imageUrl },
+          mana_cost: cardData.manaCost,
+          cmc: cardData.cmc,
+          type_line: cardData.typeLine,
+          colors: cardData.colors,
+        },
+        quantity: cardData.quantity,
+        category: cardData.category,
+      }))
+    );
+
+    setShowLoadDialog(false);
+  };
+
+  const deleteDeck = async (deckId) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este mazo?"))
+      return;
+
+    try {
+      await deleteDoc(doc(db, "decks", deckId));
+      showToast("Mazo eliminado correctamente.", "success");
+      loadUserDecks();
+      if (currentDeckId === deckId) {
+        clearDeck();
+      }
+    } catch (err) {
+      console.error("Error deleting deck:", err);
+      showToast("Error al eliminar el mazo: " + err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadUserDecks();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // ===== STATISTICS =====
+  const deckStats = useMemo(() => {
+    const totalCards = deckCards.reduce(
+      (sum, dc) => sum + (Number(dc.quantity) || 0),
+      0
+    );
+
+    const manaCurve = {};
+    deckCards.forEach((dc) => {
+      const cmc = getCMC(dc.card);
+      const cmcKey = cmc >= 7 ? "7+" : cmc.toString();
+      manaCurve[cmcKey] = (manaCurve[cmcKey] || 0) + dc.quantity;
+    });
+
+    const colorCount = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
+    deckCards.forEach((dc) => {
+      const colors = getCardColors(dc.card);
+      if (colors.length === 0) {
+        colorCount.C += dc.quantity;
+      } else {
+        colors.forEach((color) => {
+          colorCount[color] = (colorCount[color] || 0) + dc.quantity;
+        });
+      }
+    });
+
+    const typeCount = {};
+    deckCards.forEach((dc) => {
+      typeCount[dc.category] = (typeCount[dc.category] || 0) + dc.quantity;
+    });
+
+    const totalCMC = deckCards.reduce(
+      (sum, dc) => sum + getCMC(dc.card) * dc.quantity,
+      0
+    );
+    const avgCMC = totalCards > 0 ? (totalCMC / totalCards).toFixed(2) : 0;
+
+    return { totalCards, manaCurve, colorCount, typeCount, avgCMC };
+  }, [deckCards]);
+
+  // ===== EXPORT =====
+  const exportDeckToText = () => {
+    let text = `${deckName}\n`;
+    text += `Format: ${deckFormat}\n\n`;
+
+    const categories = [
+      "commander",
+      "creatures",
+      "planeswalkers",
+      "instants",
+      "sorceries",
+      "artifacts",
+      "enchantments",
+      "lands",
+      "other",
+    ];
+
+    categories.forEach((cat) => {
+      const cards = deckCards.filter((dc) => dc.category === cat);
+      if (cards.length > 0) {
+        text += `\n${cat.charAt(0).toUpperCase() + cat.slice(1)}:\n`;
+        cards.forEach((dc) => {
+          text += `${dc.quantity} ${dc.card.name}\n`;
+        });
+      }
+    });
+
+    text += `\nTotal: ${deckStats.totalCards} cards\n`;
+
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${deckName.replace(/\s+/g, "_")}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // ===== SEARCH FUNCTIONALITY =====
@@ -165,14 +531,18 @@ export default function ConstruirMazo() {
 
     try {
       const q = `name:${searchName.trim()}*`;
-      const url = `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(q)}&unique=cards&order=name`;
+      const url = `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(
+        q
+      )}&unique=cards&order=name`;
       const res = await fetch(url, { signal: controllerRef.current.signal });
       if (!res.ok) throw new Error("No se encontraron cartas.");
       const list = await res.json();
       setSearchResults(list.data || []);
       setNextPage(list.has_more ? list.next_page : null);
     } catch (err) {
-      if (err?.name !== "AbortError") setSearchError(err.message || "Error desconocido.");
+      if (err?.name !== "AbortError") {
+        setSearchError(err.message || "Error desconocido.");
+      }
     } finally {
       setSearchLoading(false);
     }
@@ -194,326 +564,7 @@ export default function ConstruirMazo() {
     }
   };
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      searchCards();
-    }, 400);
-    return () => clearTimeout(handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchName]);
-
-  // ===== DECK MANAGEMENT =====
-  const addCardToDeck = (card) => {
-    const category = categorizeCard(card);
-    const deckLimit = DECK_LIMITS[deckFormat] || 60;
-    const currentTotal = deckCards.reduce((sum, dc) => sum + dc.quantity, 0);
-
-    // Check deck limit
-    if (currentTotal >= deckLimit) {
-      alert(`El mazo ha alcanzado el límite de ${deckLimit} cartas para el formato ${deckFormat}.`);
-      return;
-    }
-
-    // Check if commander slot is full
-    if (category === "commander" && deckFormat === "commander") {
-      const commanderCount = deckCards.filter(dc => dc.category === "commander").reduce((sum, dc) => sum + dc.quantity, 0);
-      if (commanderCount >= 1) {
-        alert("Ya tienes un Comandante en el mazo.");
-        return;
-      }
-    }
-
-    const existing = deckCards.find(dc => dc.card.id === card.id);
-    if (existing) {
-      setDeckCards(prev => prev.map(dc =>
-        dc.card.id === card.id
-          ? { ...dc, quantity: dc.quantity + 1 }
-          : dc
-      ));
-    } else {
-      setDeckCards(prev => [...prev, {
-        card,
-        quantity: 1,
-        category,
-      }]);
-    }
-  };
-
-  const removeCardFromDeck = (cardId) => {
-    setDeckCards(prev => prev.filter(dc => dc.card.id !== cardId));
-  };
-
-  const updateCardQuantity = (cardId, delta) => {
-    const deckLimit = DECK_LIMITS[deckFormat] || 60;
-    const currentTotal = deckCards.reduce((sum, dc) => sum + dc.quantity, 0);
-
-    // Si estamos añadiendo y alcanzamos el límite
-    if (delta > 0 && currentTotal >= deckLimit) {
-      alert(`El mazo ha alcanzado el límite de ${deckLimit} cartas.`);
-      return;
-    }
-
-    setDeckCards(prev => prev.map(dc => {
-      if (dc.card.id === cardId) {
-        const newQty = dc.quantity + delta;
-        return newQty > 0 ? { ...dc, quantity: newQty } : dc;
-      }
-      return dc;
-    }).filter(dc => dc.quantity > 0));
-  };
-
-  const clearDeck = () => {
-    if (confirm("¿Estás seguro de que quieres vaciar el mazo?")) {
-      setDeckCards([]);
-      setDeckName("Mi Mazo");
-      setDeckDescription("");
-      setCurrentDeckId(null);
-    }
-  };
-
-  // ===== CARD DETAIL DIALOG =====
-  const openCardDetail = async (card) => {
-    // Si la carta viene del mazo y no tiene todos los datos, buscarla en Scryfall
-    if (!card.oracle_text && card.id) {
-      try {
-        const res = await fetch(`${SCRYFALL_API}/cards/${card.id}`);
-        if (res.ok) {
-          const fullCard = await res.json();
-          setSelectedCard(fullCard);
-          setShowCardDetail(true);
-          return;
-        }
-      } catch (err) {
-        console.error("Error fetching card details:", err);
-      }
-    }
-    setSelectedCard(card);
-    setShowCardDetail(true);
-  };
-
-  // Añadir todas las cartas del mazo al carrito
-  const addAllDeckToCart = async () => {
-    if (deckCards.length === 0) {
-      alert("El mazo está vacío.");
-      return;
-    }
-
-    setIsAddingToCart(true);
-
-    try {
-      let addedCount = 0;
-      let failedCount = 0;
-      const totalCards = deckCards.reduce((sum, dc) => sum + dc.quantity, 0);
-
-      // Procesar todas las cartas secuencialmente
-      for (const dc of deckCards) {
-        try {
-          const res = await fetch(`${SCRYFALL_API}/cards/${dc.card.id}`);
-          if (res.ok) {
-            const fullCard = await res.json();
-            await addToCart(fullCard, dc.quantity);
-            addedCount += dc.quantity;
-          } else {
-            failedCount += dc.quantity;
-            console.error(`Failed to fetch ${dc.card.name}`);
-          }
-        } catch (err) {
-          failedCount += dc.quantity;
-          console.error(`Error adding ${dc.card.name}:`, err);
-        }
-      }
-
-      // Mostrar resultado final
-      if (failedCount === 0) {
-        alert(`✅ Todas las cartas han sido añadidas al carrito (${addedCount} cartas).`);
-      } else {
-        alert(`⚠️ Se añadieron ${addedCount} cartas al carrito. ${failedCount} cartas no pudieron añadirse.`);
-      }
-    } catch (err) {
-      alert("❌ Error al añadir cartas al carrito: " + err.message);
-    } finally {
-      setIsAddingToCart(false);
-    }
-  };
-
-  // ===== DECK PERSISTENCE =====
-  const saveDeck = async () => {
-    if (!user) {
-      alert("Debes iniciar sesión para guardar mazos.");
-      return;
-    }
-
-    try {
-      const deckData = {
-        userId: user.uid,
-        name: deckName,
-        format: deckFormat,
-        description: deckDescription,
-        cards: deckCards.map(dc => ({
-          cardId: dc.card.id,
-          name: dc.card.name,
-          quantity: dc.quantity,
-          category: dc.category,
-          imageUrl: getCardImage(dc.card, "small"),
-          manaCost: getManaCost(dc.card),
-          cmc: getCMC(dc.card),
-          typeLine: dc.card.type_line,
-          colors: getCardColors(dc.card),
-        })),
-        updatedAt: serverTimestamp(),
-      };
-
-      if (currentDeckId) {
-        // Update existing deck
-        await updateDoc(doc(db, "decks", currentDeckId), deckData);
-        alert("✅ Mazo actualizado correctamente.");
-      } else {
-        // Create new deck
-        deckData.createdAt = serverTimestamp();
-        const docRef = await addDoc(collection(db, "decks"), deckData);
-        setCurrentDeckId(docRef.id);
-        alert("✅ Mazo guardado correctamente.");
-      }
-
-      loadUserDecks();
-    } catch (err) {
-      console.error("Error saving deck:", err);
-      alert("❌ Error al guardar el mazo: " + err.message);
-    }
-  };
-
-  const loadUserDecks = async () => {
-    if (!user) return;
-
-    try {
-      const q = query(collection(db, "decks"), where("userId", "==", user.uid));
-      const querySnapshot = await getDocs(q);
-      const decks = [];
-      querySnapshot.forEach((doc) => {
-        decks.push({ id: doc.id, ...doc.data() });
-      });
-      setSavedDecks(decks);
-    } catch (err) {
-      console.error("Error loading decks:", err);
-    }
-  };
-
-  const loadDeck = (deck) => {
-    setDeckName(deck.name);
-    setDeckFormat(deck.format);
-    setDeckDescription(deck.description || "");
-    setCurrentDeckId(deck.id);
-
-    // Reconstruct deck cards
-    setDeckCards(deck.cards.map(cardData => ({
-      card: {
-        id: cardData.cardId,
-        name: cardData.name,
-        image_uris: { small: cardData.imageUrl },
-        mana_cost: cardData.manaCost,
-        cmc: cardData.cmc,
-        type_line: cardData.typeLine,
-        colors: cardData.colors,
-      },
-      quantity: cardData.quantity,
-      category: cardData.category,
-    })));
-
-    setShowLoadDialog(false);
-  };
-
-  const deleteDeck = async (deckId) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este mazo?")) return;
-
-    try {
-      await deleteDoc(doc(db, "decks", deckId));
-      alert("Mazo eliminado correctamente.");
-      loadUserDecks();
-      if (currentDeckId === deckId) {
-        clearDeck();
-      }
-    } catch (err) {
-      console.error("Error deleting deck:", err);
-      alert("Error al eliminar el mazo: " + err.message);
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      loadUserDecks();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  // ===== STATISTICS =====
-  const deckStats = useMemo(() => {
-    const totalCards = deckCards.reduce((sum, dc) => sum + dc.quantity, 0);
-
-    // Mana curve
-    const manaCurve = {};
-    deckCards.forEach(dc => {
-      const cmc = getCMC(dc.card);
-      const cmcKey = cmc >= 7 ? "7+" : cmc.toString();
-      manaCurve[cmcKey] = (manaCurve[cmcKey] || 0) + dc.quantity;
-    });
-
-    // Color distribution
-    const colorCount = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
-    deckCards.forEach(dc => {
-      const colors = getCardColors(dc.card);
-      if (colors.length === 0) {
-        colorCount.C += dc.quantity;
-      } else {
-        colors.forEach(color => {
-          colorCount[color] = (colorCount[color] || 0) + dc.quantity;
-        });
-      }
-    });
-
-    // Type breakdown
-    const typeCount = {};
-    deckCards.forEach(dc => {
-      typeCount[dc.category] = (typeCount[dc.category] || 0) + dc.quantity;
-    });
-
-    // Average CMC
-    const totalCMC = deckCards.reduce((sum, dc) => sum + (getCMC(dc.card) * dc.quantity), 0);
-    const avgCMC = totalCards > 0 ? (totalCMC / totalCards).toFixed(2) : 0;
-
-    return { totalCards, manaCurve, colorCount, typeCount, avgCMC };
-  }, [deckCards]);
-
-  // ===== EXPORT =====
-  const exportDeckToText = () => {
-    let text = `${deckName}\n`;
-    text += `Format: ${deckFormat}\n`;
-    text += `\n`;
-
-    const categories = ["commander", "creatures", "planeswalkers", "instants", "sorceries", "artifacts", "enchantments", "lands", "other"];
-
-    categories.forEach(cat => {
-      const cards = deckCards.filter(dc => dc.category === cat);
-      if (cards.length > 0) {
-        text += `\n${cat.charAt(0).toUpperCase() + cat.slice(1)}:\n`;
-        cards.forEach(dc => {
-          text += `${dc.quantity} ${dc.card.name}\n`;
-        });
-      }
-    });
-
-    text += `\nTotal: ${deckStats.totalCards} cards\n`;
-
-    // Download as file
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${deckName.replace(/\s+/g, "_")}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // ===== RENDER =====
+  // ===== UI HELPERS =====
   const categoryLabels = {
     commander: "Comandante",
     creatures: "Criaturas",
@@ -527,15 +578,31 @@ export default function ConstruirMazo() {
   };
 
   const toggleCategory = (cat) => {
-    setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [cat]: !prev[cat],
+    }));
   };
 
-  const deckLimit = DECK_LIMITS[deckFormat] || 60;
-
+  // ===== RENDER =====
   return (
-    <div className="w-full min-h-screen bg-[#242424] text-white">
+    <div className="min-h-screen bg-[#242424] text-white flex flex-col">
+      <SEO
+        title="Construir Mazo - Tienda de Cartas"
+        description="Crea y gestiona tus mazos de Magic: The Gathering. Analiza tu curva de maná y estadísticas."
+      />
+
+      {toast && (
+        <div
+          className={`bg-${toast.type === "success" ? "green" : "red"
+            }-600 text-white px-4 py-2 rounded mb-2 fixed top-4 right-4 z-50`}
+        >
+          {toast.message}
+        </div>
+      )}
+
       {/* Top Bar */}
-      <div className="border-b border-[#0cd806] bg-[#141414] p-4">
+      <div className="bg-[#1a1a1a] border-b border-gray-700 p-4 sticky top-0 z-20 shadow-md">
         <div className="max-w-[1800px] mx-auto flex flex-wrap items-center gap-4">
           <input
             type="text"
@@ -603,25 +670,38 @@ export default function ConstruirMazo() {
       </div>
 
       {/* Main Layout */}
-      <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 p-4">
+      <div className="w-full max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 p-4">
         {/* LEFT PANEL - Card Search */}
         <div className="lg:col-span-3 bg-[#141414] border border-[#0cd806] rounded-xl p-4">
           <h2 className="text-xl font-bold mb-3">Buscar Cartas</h2>
 
-          <input
-            type="text"
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0cd806] mb-3"
-            placeholder="Nombre de la carta..."
-            value={searchName}
-            onChange={(e) => setSearchName(e.target.value)}
-          />
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
+              placeholder="Nombre de la carta..."
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") searchCards();
+              }}
+            />
+            <button
+              onClick={searchCards}
+              className="px-3 py-2 bg-[#0cd806] hover:bg-[#09f202] rounded-lg text-sm"
+            >
+              Buscar
+            </button>
+          </div>
 
           {searchError && (
-            <div className="bg-red-200 text-red-800 px-3 py-2 rounded mb-3 text-sm">{searchError}</div>
+            <div className="bg-red-200 text-red-800 px-3 py-2 rounded mb-3 text-sm">
+              {searchError}
+            </div>
           )}
 
           <div className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto">
-            {searchResults.map(card => (
+            {searchResults.map((card) => (
               <div
                 key={card.id}
                 className="flex items-center gap-2 p-2 bg-[#242424] rounded-lg hover:bg-[#333] cursor-pointer transition-colors"
@@ -634,16 +714,30 @@ export default function ConstruirMazo() {
                   className="w-12 h-16 object-cover rounded"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold truncate">{card.name}</div>
+                  <div className="text-sm font-semibold truncate">
+                    {card.name}
+                  </div>
                   <div className="text-xs text-gray-400">
                     <ManaText text={getManaCost(card)} size="sm" />
                   </div>
                 </div>
+                <button
+                  className="w-8 h-8 flex items-center justify-center bg-[#0cd806] hover:bg-[#09f202] rounded-full text-white font-bold shadow-md transition-transform hover:scale-110"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addCardToDeck(card);
+                  }}
+                  title="Añadir al mazo"
+                >
+                  +
+                </button>
               </div>
             ))}
 
             {searchLoading && (
-              <div className="text-center text-sm text-gray-400 py-2">Cargando...</div>
+              <div className="text-center text-sm text-gray-400 py-2">
+                Cargando...
+              </div>
             )}
 
             {nextPage && !searchLoading && (
@@ -664,11 +758,14 @@ export default function ConstruirMazo() {
           </h2>
 
           <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
-            {Object.keys(categoryLabels).map(cat => {
-              const cards = deckCards.filter(dc => dc.category === cat);
+            {Object.keys(categoryLabels).map((cat) => {
+              const cards = deckCards.filter((dc) => dc.category === cat);
               if (cards.length === 0) return null;
 
-              const count = cards.reduce((sum, dc) => sum + dc.quantity, 0);
+              const count = cards.reduce(
+                (sum, dc) => sum + (Number(dc.quantity) || 0),
+                0
+              );
 
               return (
                 <div key={cat} className="border border-gray-700 rounded-lg overflow-hidden">
@@ -684,9 +781,9 @@ export default function ConstruirMazo() {
 
                   {expandedCategories[cat] && (
                     <div className="p-2 space-y-1">
-                      {cards.map(dc => (
+                      {cards.map((dc) => (
                         <div
-                          key={dc.card.id}
+                          key={`${dc.card.id}-${cat}`}
                           className="flex items-center gap-2 p-2 bg-[#1a1a1a] rounded hover:bg-[#222]"
                         >
                           <img
@@ -697,21 +794,32 @@ export default function ConstruirMazo() {
                             title="Ver detalles"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold truncate">{dc.card.name}</div>
+                            <div className="text-sm font-semibold truncate">
+                              {dc.card.name}
+                            </div>
                             <div className="text-xs text-gray-400">
-                              <ManaText text={getManaCost(dc.card)} size="sm" />
+                              <ManaText
+                                text={getManaCost(dc.card)}
+                                size="sm"
+                              />
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => updateCardQuantity(dc.card.id, -1)}
+                              onClick={() =>
+                                updateCardQuantity(dc.card.id, -1)
+                              }
                               className="w-6 h-6 bg-red-600 hover:bg-red-700 rounded cursor-pointer text-xs"
                             >
                               −
                             </button>
-                            <span className="text-sm font-bold w-6 text-center">{dc.quantity}</span>
+                            <span className="text-sm font-bold w-6 text-center">
+                              {dc.quantity}
+                            </span>
                             <button
-                              onClick={() => updateCardQuantity(dc.card.id, 1)}
+                              onClick={() =>
+                                updateCardQuantity(dc.card.id, 1)
+                              }
                               className="w-6 h-6 bg-[#0cd806] hover:bg-[#09f202] rounded cursor-pointer text-xs"
                             >
                               +
@@ -734,7 +842,9 @@ export default function ConstruirMazo() {
             {deckCards.length === 0 && (
               <div className="text-center text-gray-400 py-8">
                 <p>El mazo está vacío.</p>
-                <p className="text-sm">Busca cartas y haz clic para ver detalles.</p>
+                <p className="text-sm">
+                  Busca cartas y haz clic para ver detalles.
+                </p>
               </div>
             )}
           </div>
@@ -748,9 +858,13 @@ export default function ConstruirMazo() {
             {/* Total Cards */}
             <div className="bg-[#242424] p-3 rounded-lg">
               <div className="text-sm text-gray-400">Total de Cartas</div>
-              <div className="text-2xl font-bold">{deckStats.totalCards}/{deckLimit}</div>
+              <div className="text-2xl font-bold">
+                {deckStats.totalCards}/{deckLimit}
+              </div>
               <div className="text-xs text-gray-400">
-                {deckStats.totalCards === deckLimit ? "✓ Completo" : `${deckLimit - deckStats.totalCards} restantes`}
+                {deckStats.totalCards === deckLimit
+                  ? "✓ Completo"
+                  : `${deckLimit - deckStats.totalCards} restantes`}
               </div>
             </div>
 
@@ -764,9 +878,13 @@ export default function ConstruirMazo() {
             <div className="bg-[#242424] p-3 rounded-lg">
               <div className="text-sm font-semibold mb-2">Curva de Maná</div>
               <div className="space-y-1">
-                {[0, 1, 2, 3, 4, 5, 6, "7+"].map(cmc => {
-                  const count = deckStats.manaCurve[cmc.toString()] || 0;
-                  const percentage = deckStats.totalCards > 0 ? (count / deckStats.totalCards) * 100 : 0;
+                {[0, 1, 2, 3, 4, 5, 6, "7+"].map((cmc) => {
+                  const count =
+                    deckStats.manaCurve[cmc.toString()] || 0;
+                  const percentage =
+                    deckStats.totalCards > 0
+                      ? (count / deckStats.totalCards) * 100
+                      : 0;
                   return (
                     <div key={cmc} className="flex items-center gap-2">
                       <span className="text-xs w-6">{cmc}</span>
@@ -776,7 +894,9 @@ export default function ConstruirMazo() {
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-xs w-8 text-right">{count}</span>
+                      <span className="text-xs w-8 text-right">
+                        {count}
+                      </span>
                     </div>
                   );
                 })}
@@ -785,7 +905,9 @@ export default function ConstruirMazo() {
 
             {/* Color Distribution */}
             <div className="bg-[#242424] p-3 rounded-lg">
-              <div className="text-sm font-semibold mb-2">Distribución de Colores</div>
+              <div className="text-sm font-semibold mb-2">
+                Distribución de Colores
+              </div>
               <div className="space-y-1">
                 {Object.entries({
                   W: { label: "Blanco", color: "#F0E68C" },
@@ -812,14 +934,21 @@ export default function ConstruirMazo() {
 
             {/* Type Breakdown */}
             <div className="bg-[#242424] p-3 rounded-lg">
-              <div className="text-sm font-semibold mb-2">Tipos de Carta</div>
+              <div className="text-sm font-semibold mb-2">
+                Tipos de Carta
+              </div>
               <div className="space-y-1">
-                {Object.entries(deckStats.typeCount).map(([type, count]) => (
-                  <div key={type} className="flex items-center justify-between text-xs">
-                    <span>{categoryLabels[type]}</span>
-                    <span className="font-bold">{count}</span>
-                  </div>
-                ))}
+                {Object.entries(deckStats.typeCount).map(
+                  ([type, count]) => (
+                    <div
+                      key={type}
+                      className="flex items-center justify-between text-xs"
+                    >
+                      <span>{categoryLabels[type]}</span>
+                      <span className="font-bold">{count}</span>
+                    </div>
+                  )
+                )}
               </div>
             </div>
           </div>
@@ -837,19 +966,22 @@ export default function ConstruirMazo() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col md:flex-row">
-              {/* Imagen grande */}
               <div className="md:w-1/2 flex items-center justify-center p-3 bg-[#1a1a1a]">
                 <img
-                  src={getCardImage(selectedCard, "large") || getCardImage(selectedCard, "normal")}
+                  src={
+                    getCardImage(selectedCard, "large") ||
+                    getCardImage(selectedCard, "normal")
+                  }
                   alt={selectedCard.name}
                   className="rounded-lg max-h-[500px]"
                 />
               </div>
 
-              {/* Info */}
               <div className="md:w-1/2 p-4 space-y-3">
                 <div className="flex justify-between items-start gap-3">
-                  <h2 className="text-xl font-bold">{selectedCard.name}</h2>
+                  <h2 className="text-xl font-bold">
+                    {selectedCard.name}
+                  </h2>
                   <button
                     className="text-gray-500 hover:text-gray-300 cursor-pointer text-2xl leading-none"
                     onClick={() => setShowCardDetail(false)}
@@ -860,21 +992,42 @@ export default function ConstruirMazo() {
                 </div>
 
                 <div className="text-sm text-white space-y-1">
-                  <div><span className="font-semibold">Tipo:</span> {selectedCard.type_line}</div>
-                  <div><span className="font-semibold">Set:</span> {selectedCard.set_name} ({selectedCard.set?.toUpperCase()})</div>
-                  <div><span className="font-semibold">Rareza:</span> {selectedCard.rarity}</div>
                   <div>
-                    <span className="font-semibold">Coste de Maná:</span>{" "}
-                    <ManaText text={getManaCost(selectedCard)} size="sm" />
+                    <span className="font-semibold">Tipo:</span>{" "}
+                    {selectedCard.type_line}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Set:</span>{" "}
+                    {selectedCard.set_name} (
+                    {selectedCard.set?.toUpperCase()})
+                  </div>
+                  <div>
+                    <span className="font-semibold">Rareza:</span>{" "}
+                    {selectedCard.rarity}
+                  </div>
+                  <div>
+                    <span className="font-semibold">
+                      Coste de Maná:
+                    </span>{" "}
+                    <ManaText
+                      text={getManaCost(selectedCard)}
+                      size="sm"
+                    />
                   </div>
                 </div>
 
                 <div className="text-sm bg-[#242424] p-3 rounded">
-                  <div className="font-semibold mb-1">Texto de Reglas:</div>
-                  <ManaText text={getOracleText(selectedCard) || "Sin texto de reglas."} size="sm" />
+                  <div className="font-semibold mb-1">
+                    Texto de Reglas:
+                  </div>
+                  <ManaText
+                    text={
+                      getOracleText(selectedCard) || "Sin texto de reglas."
+                    }
+                    size="sm"
+                  />
                 </div>
 
-                {/* Botón de acción */}
                 <div>
                   <button
                     className="w-full py-2 bg-[#0cd806] hover:bg-[#09f202] text-white rounded cursor-pointer"
@@ -900,7 +1053,9 @@ export default function ConstruirMazo() {
 
             {!user ? (
               <div className="text-center">
-                <p className="mb-4">Debes iniciar sesión para guardar mazos.</p>
+                <p className="mb-4">
+                  Debes iniciar sesión para guardar mazos.
+                </p>
                 <button
                   onClick={() => setShowSaveDialog(false)}
                   className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg cursor-pointer"
@@ -911,7 +1066,9 @@ export default function ConstruirMazo() {
             ) : (
               <>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Nombre del Mazo</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Nombre del Mazo
+                  </label>
                   <input
                     type="text"
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
@@ -921,12 +1078,16 @@ export default function ConstruirMazo() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Descripción (opcional)</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Descripción (opcional)
+                  </label>
                   <textarea
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
                     rows="3"
                     value={deckDescription}
-                    onChange={(e) => setDeckDescription(e.target.value)}
+                    onChange={(e) =>
+                      setDeckDescription(e.target.value)
+                    }
                   />
                 </div>
 
@@ -961,7 +1122,9 @@ export default function ConstruirMazo() {
 
             {!user ? (
               <div className="text-center">
-                <p className="mb-4">Debes iniciar sesión para cargar mazos.</p>
+                <p className="mb-4">
+                  Debes iniciar sesión para cargar mazos.
+                </p>
                 <button
                   onClick={() => setShowLoadDialog(false)}
                   className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg cursor-pointer"
@@ -982,7 +1145,7 @@ export default function ConstruirMazo() {
             ) : (
               <>
                 <div className="space-y-2 mb-4">
-                  {savedDecks.map(deck => (
+                  {savedDecks.map((deck) => (
                     <div
                       key={deck.id}
                       className="bg-[#242424] p-3 rounded-lg flex items-center justify-between hover:bg-[#333]"
@@ -990,7 +1153,12 @@ export default function ConstruirMazo() {
                       <div className="flex-1">
                         <div className="font-semibold">{deck.name}</div>
                         <div className="text-xs text-gray-400">
-                          {deck.format} • {deck.cards?.reduce((sum, c) => sum + c.quantity, 0) || 0} cartas
+                          {deck.format} •{" "}
+                          {deck.cards?.reduce(
+                            (sum, c) => sum + c.quantity,
+                            0
+                          ) || 0}{" "}
+                          cartas
                         </div>
                       </div>
                       <div className="flex gap-2">
