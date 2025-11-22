@@ -1337,6 +1337,7 @@ export default function Cuenta() {
                             <td className="px-3 py-2 text-right space-x-1">
                               <button
                                 type="button"
+                                onClick={() => markCodeSent(c)}
                                 disabled={sent}
                                 className={`px-2 py-1 rounded text-xs ${sent
                                   ? "bg-gray-300 text-white cursor-not-allowed"
