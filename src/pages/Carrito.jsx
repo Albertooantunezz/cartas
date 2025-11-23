@@ -718,7 +718,7 @@ export default function Carrito() {
                     return (
                       <div
                         key={card.id || `${card.oracle_id}-fallback`}
-                        className="relative group rounded-lg overflow-hidden bg-[#1a1a1a] transition-all duration-300 hover:scale-105"
+                        className="relative group rounded-lg overflow-hidden bg-[#1a1a1a] transition-all duration-300 hover:scale-105 flex flex-col h-full"
                         style={{
                           border: '1px solid rgba(255, 255, 255, 0.1)',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
@@ -765,7 +765,7 @@ export default function Carrito() {
                         </div>
 
                         {/* Controles de cantidad y eliminar */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white px-2 py-1 flex items-center justify-between">
+                        <div className="mt-auto w-full bg-black/60 text-white px-2 py-1 flex items-center justify-between">
                           <div className="flex items-center gap-1">
                             <button
                               className="px-2 py-0.5 bg-white/20 rounded hover:bg-white/30 cursor-pointer"
@@ -795,7 +795,7 @@ export default function Carrito() {
                             title="Eliminar del carrito"
                             disabled={isClearing}
                           >
-                            🗑️ Eliminar
+                            Eliminar
                           </button>
                         </div>
                       </div>
