@@ -291,7 +291,7 @@ export default function Carrito() {
   );
 
   const unitPrice = useMemo(() => {
-    if (totalUnits >= 50) return 0.75;
+    if (totalUnits >= 50) return 0.5;
     if (totalUnits >= 40) return 1.0;
     if (totalUnits >= 9) return 1.5;
     return 2.0;
