@@ -1121,14 +1121,14 @@ export default function ConstruirMazo() {
 
                 <div className="pt-2">
                   <button
-                    className="w-full py-3 rounded-lg font-bold text-white shadow-lg transition-all hover:scale-105"
+                    className="w-full py-3 rounded-lg font-bold text-white shadow-lg transition-all hover:scale-105 cursor-pointer"
                     style={{ background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)' }}
                     onClick={() => {
                       addCardToDeck(selectedCard);
                       setShowCardDetail(false);
                     }}
                   >
-                    ➕ Añadir al Mazo
+                    Añadir al Mazo
                   </button>
                 </div>
               </div>
