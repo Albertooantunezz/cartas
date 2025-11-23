@@ -182,104 +182,117 @@ export default function CheckoutSuccess() {
   // 4) Render
   if (!sessionId) {
     return (
-      <div className="min-h-screen bg-red-50 flex items-center justify-center p-4">
-        <div className="max-w-lg w-full bg-white border border-gray-200 rounded-2xl shadow p-6 text-center">
-          <h1 className="text-xl font-bold">Falta session_id</h1>
-          <p className="text-gray-600 mt-1">Vuelve al carrito e inicia el pago de nuevo.</p>
-          <div className="mt-4">
-            <Link to="/carrito" className="inline-block px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800">Volver al carrito</Link>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)' }}>
+        <div className="max-w-lg w-full bg-[#141414] border border-red-500/30 rounded-2xl shadow-2xl p-6 text-center">
+          <h1 className="text-xl font-bold text-red-500">Falta session_id</h1>
+          <p className="text-gray-400 mt-1">Vuelve al carrito e inicia el pago de nuevo.</p>
+          <div className="mt-6">
+            <Link to="/carrito" className="inline-block px-6 py-2 rounded-xl font-bold text-white transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, #242424 0%, #333 100%)',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+              Volver al carrito
+            </Link>
           </div>
         </div>
       </div>
-    );x
+    );
   }
 
   const isLoading = status === "checking" || status === "finalizing";
 
   return (
-    <div className="min-h-screen bg-[#242424] p-4 text-black">
-      <div className="mx-auto max-w-3xl">
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b">
-            <div className="flex items-start gap-3">
-              <div className={`shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${status === "success" ? "bg-green-100" : status === "error" ? "bg-red-100" : "bg-yellow-100"}`}>
-                <span className={`text-lg ${status === "success" ? "text-green-700" : status === "error" ? "text-red-700" : "text-yellow-700"}`}>
+    <div className="min-h-screen p-4 text-white flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)' }}>
+      <div className="w-full max-w-3xl">
+        <div className="bg-[#141414] border border-[#0cd806]/20 rounded-2xl shadow-[0_0_40px_rgba(12,216,6,0.1)] overflow-hidden backdrop-blur-sm">
+          <div className="p-8 border-b border-gray-800">
+            <div className="flex items-start gap-4">
+              <div className={`shrink-0 h-12 w-12 rounded-full flex items-center justify-center ${status === "success" ? "bg-[#0cd806]/20 text-[#0cd806]" : status === "error" ? "bg-red-500/20 text-red-500" : "bg-yellow-500/20 text-yellow-500"}`}>
+                <span className="text-2xl font-bold">
                   {status === "success" ? "✓" : status === "error" ? "!" : "…"}
                 </span>
               </div>
               <div>
-                <h1 className="text-xl font-bold">
+                <h1 className="text-2xl font-bold text-white">
                   {status === "success" ? "¡Pago completado!" : status === "error" ? "Incidencia al registrar el pedido" : "Confirmando tu pago…"}
                 </h1>
-                <p className="text-gray-600 mt-1">{message}</p>
-                <p className="text-xs text-gray-400 mt-1">session_id: <code className="break-all">{sessionId}</code></p>
+                <p className="text-gray-400 mt-2">{message}</p>
+                <p className="text-xs text-gray-600 mt-2 font-mono">session_id: <code className="break-all">{sessionId}</code></p>
               </div>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-8">
             {/* Resumen del pedido */}
             {order ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between bg-[#1a1a1a] p-4 rounded-xl border border-gray-800">
                   <div>
                     <div className="text-sm text-gray-500">Nº de pedido</div>
-                    <div className="font-semibold">#{order.id?.slice?.(-6)?.toUpperCase?.() || "—"}</div>
+                    <div className="font-mono text-[#0cd806] text-lg">#{order.id?.slice?.(-6)?.toUpperCase?.() || "—"}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-gray-500">Total</div>
-                    <div className="text-xl font-bold">{typeof order.totalEUR === "number" ? `${order.totalEUR.toFixed(2)} €` : "—"}</div>
+                    <div className="text-2xl font-bold text-white">{typeof order.totalEUR === "number" ? `${order.totalEUR.toFixed(2)} €` : "—"}</div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="rounded-lg border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">Estado</div>
-                    <div className="font-medium">{order.status || "paid"}</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-xl border border-gray-800 bg-[#1a1a1a] p-4">
+                    <div className="text-xs text-gray-500 uppercase tracking-wider">Estado</div>
+                    <div className="font-medium text-white mt-1 capitalize">{order.status || "paid"}</div>
                   </div>
-                  <div className="rounded-lg border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">Unidades</div>
-                    <div className="font-medium">{order.totalQty || (order.items?.reduce?.((s,i)=>s+(i.qty||0),0) || 0)}</div>
+                  <div className="rounded-xl border border-gray-800 bg-[#1a1a1a] p-4">
+                    <div className="text-xs text-gray-500 uppercase tracking-wider">Unidades</div>
+                    <div className="font-medium text-white mt-1">{order.totalQty || (order.items?.reduce?.((s, i) => s + (i.qty || 0), 0) || 0)}</div>
                   </div>
-
                 </div>
 
                 <div>
-                  <h2 className="font-semibold mb-2">Artículos</h2>
+                  <h2 className="font-bold text-lg mb-4 text-white">Artículos</h2>
                   {order.items?.length ? (
-                    <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200">
+                    <ul className="divide-y divide-gray-800 rounded-xl border border-gray-800 bg-[#1a1a1a] overflow-hidden">
                       {order.items.map((it, idx) => (
-                        <li key={idx} className="p-3 flex items-center justify-between">
-                          <div className="min-w-0">
-                            <div className="font-medium truncate">{it.name}</div>
-                            <div className="text-xs text-gray-500 truncate">{it.set_name || it.set} · #{it.collector_number || it.cardId}</div>
+                        <li key={idx} className="p-4 flex items-center justify-between hover:bg-[#242424] transition-colors">
+                          <div className="min-w-0 pr-4">
+                            <div className="font-medium text-white truncate">{it.name}</div>
+                            <div className="text-xs text-gray-500 truncate mt-0.5">{it.set_name || it.set} · #{it.collector_number || it.cardId}</div>
                           </div>
-                          <div className="text-sm text-gray-700">x{it.qty}</div>
+                          <div className="text-sm font-bold text-[#0cd806] whitespace-nowrap">x{it.qty}</div>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <div className="text-sm text-gray-600">No hay items para mostrar.</div>
+                    <div className="text-sm text-gray-500 italic">No hay items para mostrar.</div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="text-gray-600">
-                {isLoading ? "Buscando tu pedido…" : "No encontramos el pedido todavía."}
+              <div className="text-gray-400 py-8 text-center">
+                {isLoading ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-[#0cd806] border-t-transparent rounded-full animate-spin"></div>
+                    <span>Buscando tu pedido…</span>
+                  </div>
+                ) : "No encontramos el pedido todavía."}
               </div>
             )}
 
             {/* Acciones */}
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="mt-8 flex flex-wrap gap-3 pt-6 border-t border-gray-800">
               <Link
                 to="/catalogo"
-                className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                className="px-6 py-3 rounded-xl border border-gray-700 text-gray-300 hover:bg-[#242424] hover:text-white transition-colors font-medium"
               >
                 Seguir comprando
               </Link>
               <Link
                 to="/cuenta"
-                className="px-4 py-2 rounded-lg bg-[#0cd806] text-white hover:bg-[#0ab205]"
+                className="px-6 py-3 rounded-xl font-bold text-white transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-[#0cd806]/20"
+                style={{
+                  background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)',
+                }}
               >
                 Ver mis pedidos
               </Link>
@@ -287,7 +300,7 @@ export default function CheckoutSuccess() {
               {status === "error" && (
                 <button
                   onClick={() => window.location.reload()}
-                  className="px-4 py-2 rounded-lg bg-[red-500] text-white hover:bg-red-600"
+                  className="px-6 py-3 rounded-xl bg-red-600 text-white hover:bg-red-500 transition-colors font-medium"
                 >
                   Reintentar
                 </button>
@@ -297,9 +310,9 @@ export default function CheckoutSuccess() {
         </div>
 
         {/* Nota de seguridad */}
-        <p className="text-xs text-gray-500 mt-3">
+        <p className="text-xs text-gray-500 mt-4 text-center">
           Si tu pedido no aparece al instante, puede tardar unos segundos en procesarse.
-          Después lo verás también en <Link to="/cuenta" className="underline">Mi cuenta</Link>.
+          Después lo verás también en <Link to="/cuenta" className="text-[#0cd806] hover:underline">Mi cuenta</Link>.
         </p>
       </div>
     </div>
