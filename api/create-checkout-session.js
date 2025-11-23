@@ -5,7 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Tramos de precio por cantidad
 function unitPriceEURFromQty(total) {
-  if (total >= 50) return 0.75;
+  if (total >= 50) return 0.5;
   if (total >= 40) return 1.0;
   if (total >= 9) return 1.5;
   return 2.0;
@@ -87,7 +87,7 @@ export default async function handler(req, res) {
           images: it.image ? [it.image] : undefined,
           metadata: {
             cardId: it.id,
-            name: it.name || "",              
+            name: it.name || "",
             set: it.set || "",
             set_name: it.set_name || "",
             collector_number: String(it.collector_number || ""),
