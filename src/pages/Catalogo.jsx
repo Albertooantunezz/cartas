@@ -273,16 +273,23 @@ export default function Catalogo() {
   // Render
   // -----------------------------
   return (
-    <div className="w-full min-h-screen bg-[#242424] p-4 text-white">
-      <h1 className="text-3xl font-bold mb-4">Catálogo</h1>
+    <div className="w-full min-h-screen p-4 text-white" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)' }}>
+      <h1 className="text-4xl font-bold mb-4" style={{ textShadow: '0 0 20px rgba(12, 216, 6, 0.3)' }}>Catálogo</h1>
 
-      <p className="text-sm text-white mb-4">
+      <p className="text-sm text-white mb-6">
         Explora nuestro catálogo de cartas. Busca por <b>código</b> (<code>SET-#</code>), <b>nombre</b> o filtra por características.
       </p>
 
       {/* Filtros */}
-      <form className="mb-5 rounded-xl border border-[#0cd806] bg-[#141414] shadow-sm" onSubmit={(e) => e.preventDefault()}>
-        <div className="px-4 py-3 border-b border-[#0cd806]">
+      <form
+        className="mb-6 rounded-xl bg-[#141414] shadow-lg transition-all duration-300 hover:shadow-2xl"
+        style={{
+          border: '1px solid rgba(12, 216, 6, 0.3)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4), 0 0 20px rgba(12, 216, 6, 0.1)'
+        }}
+        onSubmit={(e) => e.preventDefault()}
+      >
+        <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(12, 216, 6, 0.2)' }}>
           <h2 className="text-base font-semibold text-white">Filtros</h2>
           <p className="text-xs text-white">
             Código prioriza una impresión exacta (ej: <code>mh3-146</code>). El nombre admite coincidencias parciales.
@@ -396,13 +403,26 @@ export default function Catalogo() {
 
 
       {/* Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-10 gap-3 justify-items-center">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-10 gap-4 justify-items-center">
         {cards.slice(0, visibleCount).map((card) => {
           const img = getCardImage(card, "normal");
           const qtyInCart = (items.find(it => it.id === card.id)?.qty) || 0;
 
           return (
-            <div onClick={() => openCardDetail(card)} key={card.id} className="mb-10 cursor-pointer relative w-auto flex justify-center items-center bg-red-100 rounded-lg shadow hover:shadow-md overflow-hidden">
+            <div
+              onClick={() => openCardDetail(card)}
+              key={card.id}
+              className="mb-10 cursor-pointer relative w-auto flex justify-center items-center rounded-lg overflow-hidden transition-all duration-300 hover:scale-110"
+              style={{
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.7), 0 0 24px rgba(12, 216, 6, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.4)';
+              }}
+            >
               <div
                 key={card.id}
                 title="Ver detalles"
@@ -431,7 +451,11 @@ export default function Catalogo() {
                   −
                 </button>
                 <button
-                  className="px-2 py-1 bg-[#0cd806] hover:bg-[#09f202] rounded text-xs cursor-pointer"
+                  className="px-3 py-1.5 rounded text-xs font-bold transition-all duration-200 cursor-pointer"
+                  style={{
+                    background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)',
+                    boxShadow: '0 2px 8px rgba(12, 216, 6, 0.3)'
+                  }}
                   onClick={async (e) => {
                     e.stopPropagation();
                     try {
@@ -458,9 +482,13 @@ export default function Catalogo() {
         ) : (nextPage || cards.length > visibleCount) ? (
           <button
             onClick={fetchMore}
-            className="cursor-pointer text-white px-4 py-2 bg-[#0cd806] border border-gray-300 rounded-lg shadow hover:shadow-md transition-colors duration-200 ease-out hover:bg-[#09f202]"
+            className="cursor-pointer text-white px-6 py-3 rounded-lg font-bold transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+            style={{
+              background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)',
+              boxShadow: '0 4px 16px rgba(12, 216, 6, 0.4)'
+            }}
           >
-            Cargar más
+            🔽 Cargar más
           </button>
         ) : cards.length > 0 ? (
           <div className="text-sm text-gray-600">No hay más resultados.</div>
@@ -469,8 +497,19 @@ export default function Catalogo() {
 
       {/* Dialog de detalle */}
       {openDialog && selectedCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setOpenDialog(false)}>
-          <div className="bg-[#141414] border border-[#0cd806] rounded-xl shadow-xl max-w-4xl w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.7)' }}
+          onClick={() => setOpenDialog(false)}
+        >
+          <div
+            className="bg-[#141414] rounded-xl max-w-4xl w-full overflow-hidden"
+            style={{
+              border: '1px solid rgba(12, 216, 6, 0.3)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(12, 216, 6, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex flex-col md:flex-row">
               {/* Imagen grande sin recorte */}
               {/* Imagen grande */}

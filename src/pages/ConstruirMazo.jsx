@@ -646,7 +646,7 @@ export default function ConstruirMazo() {
 
   // ===== RENDER =====
   return (
-    <div className="min-h-screen bg-[#242424] text-white flex flex-col">
+    <div className="min-h-screen text-white flex flex-col" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)' }}>
       <SEO
         title="Construir Mazo - Tienda de Cartas"
         description="Crea y gestiona tus mazos de Magic: The Gathering. Analiza tu curva de maná y estadísticas."
@@ -666,9 +666,7 @@ export default function ConstruirMazo() {
               } text-white px-6 py-3 rounded-lg shadow-2xl border-2 min-w-[300px] max-w-[600px]`}
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl">
-                {toast.type === "success" ? "✅" : "⚠️"}
-              </span>
+
               <span className="font-medium text-sm">{toast.message}</span>
             </div>
           </div>
@@ -689,18 +687,18 @@ export default function ConstruirMazo() {
       `}</style>
 
       {/* Top Bar */}
-      <div className="bg-[#1a1a1a] border-b border-gray-700 p-4 sticky top-0 z-20 shadow-md">
+      <div className="border-b border-[#0cd806]/30 p-4 sticky top-0 z-20 shadow-lg backdrop-blur-md bg-[#1a1a1a]/90">
         <div className="max-w-[1800px] mx-auto flex flex-wrap items-center gap-4">
           <input
             type="text"
-            className="flex-1 min-w-[200px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
+            className="flex-1 min-w-[200px] rounded-lg border border-gray-600 bg-[#242424] text-white px-4 py-2.5 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0cd806] focus:border-transparent transition-all"
             placeholder="Nombre del mazo"
             value={deckName}
             onChange={(e) => setDeckName(e.target.value)}
           />
 
           <select
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0cd806] cursor-pointer"
+            className="rounded-lg border border-gray-600 bg-[#242424] text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#0cd806] cursor-pointer hover:bg-[#2a2a2a] transition-colors"
             value={deckFormat}
             onChange={(e) => setDeckFormat(e.target.value)}
           >
@@ -711,43 +709,53 @@ export default function ConstruirMazo() {
             <option value="vintage">Vintage (60)</option>
           </select>
 
-          <button
-            onClick={() => setShowSaveDialog(true)}
-            className="px-4 py-2 bg-[#0cd806] hover:bg-[#09f202] rounded-lg cursor-pointer transition-colors"
-          >
-            Guardar
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowSaveDialog(true)}
+              className="px-4 py-2.5 rounded-lg font-medium text-white transition-all duration-300 hover:scale-105 shadow-md cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)' }}
+            >
+              Guardar
+            </button>
 
-          <button
-            onClick={() => setShowLoadDialog(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer transition-colors"
-          >
-            Cargar
-          </button>
+            <button
+              onClick={() => setShowLoadDialog(true)}
+              className="px-4 py-2.5 rounded-lg font-medium text-white transition-all duration-300 hover:scale-105 shadow-md cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' }}
+            >
+              Cargar
+            </button>
 
-          <button
-            onClick={exportDeckToText}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg cursor-pointer transition-colors"
-          >
-            Exportar
-          </button>
+            <button
+              onClick={exportDeckToText}
+              className="px-4 py-2.5 rounded-lg font-medium text-white transition-all duration-300 hover:scale-105 shadow-md cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #9333ea 0%, #a855f7 100%)' }}
+            >
+              Exportar
+            </button>
 
-          <button
-            onClick={clearDeck}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg cursor-pointer transition-colors"
-          >
-            Limpiar
-          </button>
+            <button
+              onClick={clearDeck}
+              className="px-4 py-2.5 rounded-lg font-medium text-white transition-all duration-300 hover:scale-105 shadow-md cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)' }}
+            >
+              Limpiar
+            </button>
+          </div>
 
           <button
             onClick={addAllDeckToCart}
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cursor-pointer px-6 py-2.5 rounded-lg font-bold text-white transition-all duration-300 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+            style={{
+              background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+              boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)'
+            }}
             disabled={deckCards.length === 0 || isAddingToCart}
           >
             {isAddingToCart ? (
               <>
                 <span className="inline-block animate-spin mr-2">⏳</span>
-                Agregando al carrito...
+                Agregando...
               </>
             ) : (
               "Añadir Mazo al Carrito"
@@ -759,13 +767,15 @@ export default function ConstruirMazo() {
       {/* Main Layout */}
       <div className="w-full max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 p-4">
         {/* LEFT PANEL - Card Search */}
-        <div className="lg:col-span-3 bg-[#141414] border border-[#0cd806] rounded-xl p-4">
-          <h2 className="text-xl font-bold mb-3">Buscar Cartas</h2>
+        <div className="lg:col-span-3 bg-[#141414] border border-[#0cd806]/30 rounded-xl p-4 shadow-lg h-fit sticky top-24">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            Buscar Cartas
+          </h2>
 
-          <div className="mb-3">
+          <div className="mb-4">
             <input
               type="text"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
+              className="w-full rounded-lg border border-gray-600 bg-[#242424] text-white px-4 py-2.5 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0cd806] transition-all"
               placeholder="Escribe para buscar cartas..."
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
@@ -784,11 +794,11 @@ export default function ConstruirMazo() {
             </div>
           )}
 
-          <div className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto">
+          <div className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto pr-1 custom-scrollbar">
             {searchResults.map((card) => (
               <div
                 key={card.id}
-                className="flex items-center gap-2 p-2 bg-[#242424] rounded-lg hover:bg-[#333] cursor-pointer transition-colors"
+                className="flex items-center gap-3 p-2 bg-[#242424] rounded-lg hover:bg-[#2a2a2a] cursor-pointer transition-all duration-200 border border-transparent hover:border-[#0cd806]/50 group"
                 onClick={() => openCardDetail(card)}
                 title="Clic para ver detalles"
               >
@@ -830,12 +840,12 @@ export default function ConstruirMazo() {
         </div>
 
         {/* CENTER PANEL - Deck List */}
-        <div className="lg:col-span-6 bg-[#141414] border border-[#0cd806] rounded-xl p-4">
-          <h2 className="text-xl font-bold mb-3">
-            Lista del Mazo ({deckStats.totalCards}/{deckLimit} cartas)
+        <div className="lg:col-span-6 bg-[#141414] border border-[#0cd806]/30 rounded-xl p-4 shadow-lg">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            Lista del Mazo <span className="text-sm font-normal text-gray-400">({deckStats.totalCards}/{deckLimit} cartas)</span>
           </h2>
 
-          <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1 custom-scrollbar">
             {Object.keys(categoryLabels).map((cat) => {
               const cards = deckCards.filter((dc) => dc.category === cat);
               if (cards.length === 0) return null;
@@ -846,36 +856,37 @@ export default function ConstruirMazo() {
               );
 
               return (
-                <div key={cat} className="border border-gray-700 rounded-lg overflow-hidden">
+                <div key={cat} className="border border-gray-800 rounded-xl overflow-hidden bg-[#1a1a1a]">
                   <div
-                    className="bg-[#242424] px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-[#333]"
+                    className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-[#242424] transition-colors"
                     onClick={() => toggleCategory(cat)}
+                    style={{ borderLeft: `4px solid #0cd806` }}
                   >
-                    <span className="font-semibold">
-                      {categoryLabels[cat]} ({count})
+                    <span className="font-bold text-gray-200">
+                      {categoryLabels[cat]} <span className="text-[#0cd806] ml-1">({count})</span>
                     </span>
-                    <span>{expandedCategories[cat] ? "▼" : "▶"}</span>
+                    <span className="text-gray-500">{expandedCategories[cat] ? "▼" : "▶"}</span>
                   </div>
 
                   {expandedCategories[cat] && (
-                    <div className="p-2 space-y-1">
+                    <div className="p-2 space-y-1 bg-[#141414]">
                       {cards.map((dc) => (
                         <div
                           key={`${dc.card.id}-${cat}`}
-                          className="flex items-center gap-2 p-2 bg-[#1a1a1a] rounded hover:bg-[#222]"
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#242424] transition-all group border border-transparent hover:border-[#0cd806]/30"
                         >
                           <img
                             src={getCardImage(dc.card, "small")}
                             alt={dc.card.name}
-                            className="w-10 h-14 object-cover rounded cursor-pointer"
+                            className="w-10 h-14 object-cover rounded cursor-pointer shadow-sm group-hover:shadow-md transition-all"
                             onClick={() => openCardDetail(dc.card)}
                             title="Ver detalles"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold truncate">
+                            <div className="text-sm font-semibold truncate text-gray-200 group-hover:text-white">
                               {dc.card.name}
                             </div>
-                            <div className="text-xs text-gray-400">
+                            <div className="text-xs text-gray-500">
                               <ManaText
                                 text={getManaCost(dc.card)}
                                 size="sm"
@@ -887,24 +898,24 @@ export default function ConstruirMazo() {
                               onClick={() =>
                                 updateCardQuantity(dc.card.id, -1)
                               }
-                              className="w-6 h-6 bg-red-600 hover:bg-red-700 rounded cursor-pointer text-xs"
+                              className="w-7 h-7 flex items-center justify-center bg-[#242424] border border-gray-700 hover:border-red-500 hover:text-red-500 rounded-lg cursor-pointer text-sm transition-all"
                             >
                               −
                             </button>
-                            <span className="text-sm font-bold w-6 text-center">
+                            <span className="text-sm font-bold w-6 text-center text-white">
                               {dc.quantity}
                             </span>
                             <button
                               onClick={() =>
                                 updateCardQuantity(dc.card.id, 1)
                               }
-                              className="w-6 h-6 bg-[#0cd806] hover:bg-[#09f202] rounded cursor-pointer text-xs"
+                              className="w-7 h-7 flex items-center justify-center bg-[#242424] border border-gray-700 hover:border-[#0cd806] hover:text-[#0cd806] rounded-lg cursor-pointer text-sm transition-all"
                             >
                               +
                             </button>
                             <button
                               onClick={() => removeCardFromDeck(dc.card.id)}
-                              className="ml-2 px-2 py-1 bg-red-600 hover:bg-red-700 rounded cursor-pointer text-xs"
+                              className="ml-2 w-7 h-7 flex items-center justify-center bg-red-900/20 text-red-500 hover:bg-red-600 hover:text-white rounded-lg cursor-pointer text-sm transition-all"
                             >
                               ✕
                             </button>
@@ -918,10 +929,10 @@ export default function ConstruirMazo() {
             })}
 
             {deckCards.length === 0 && (
-              <div className="text-center text-gray-400 py-8">
-                <p>El mazo está vacío.</p>
+              <div className="text-center text-gray-500 py-12 border-2 border-dashed border-gray-800 rounded-xl">
+                <p className="text-lg font-medium mb-2">El mazo está vacío</p>
                 <p className="text-sm">
-                  Busca cartas y haz clic para ver detalles.
+                  Busca cartas en el panel izquierdo y añádelas aquí.
                 </p>
               </div>
             )}
@@ -929,33 +940,35 @@ export default function ConstruirMazo() {
         </div>
 
         {/* RIGHT PANEL - Statistics */}
-        <div className="lg:col-span-3 bg-[#141414] border border-[#0cd806] rounded-xl p-4">
-          <h2 className="text-xl font-bold mb-3">Estadísticas</h2>
+        <div className="lg:col-span-3 bg-[#141414] border border-[#0cd806]/30 rounded-xl p-4 shadow-lg h-fit sticky top-24">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">Estadísticas</h2>
 
           <div className="space-y-4">
             {/* Total Cards */}
-            <div className="bg-[#242424] p-3 rounded-lg">
-              <div className="text-sm text-gray-400">Total de Cartas</div>
-              <div className="text-2xl font-bold">
-                {deckStats.totalCards}/{deckLimit}
-              </div>
-              <div className="text-xs text-gray-400">
-                {deckStats.totalCards === deckLimit
-                  ? "✓ Completo"
-                  : `${deckLimit - deckStats.totalCards} restantes`}
+            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gray-800 shadow-sm">
+              <div className="text-sm text-gray-400 mb-1">Total de Cartas</div>
+              <div className="flex items-end justify-between">
+                <div className="text-3xl font-bold text-white">
+                  {deckStats.totalCards}<span className="text-lg text-gray-500 font-normal">/{deckLimit}</span>
+                </div>
+                <div className={`text-xs px-2 py-1 rounded-full ${deckStats.totalCards === deckLimit ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-yellow-900/30 text-yellow-400 border border-yellow-800'}`}>
+                  {deckStats.totalCards === deckLimit
+                    ? "✓ Completo"
+                    : `${deckLimit - deckStats.totalCards} restantes`}
+                </div>
               </div>
             </div>
 
             {/* Average CMC */}
-            <div className="bg-[#242424] p-3 rounded-lg">
-              <div className="text-sm text-gray-400">CMC Promedio</div>
-              <div className="text-2xl font-bold">{deckStats.avgCMC}</div>
+            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gray-800 shadow-sm">
+              <div className="text-sm text-gray-400 mb-1">CMC Promedio</div>
+              <div className="text-3xl font-bold text-[#0cd806]">{deckStats.avgCMC}</div>
             </div>
 
             {/* Mana Curve */}
-            <div className="bg-[#242424] p-3 rounded-lg">
-              <div className="text-sm font-semibold mb-2">Curva de Maná</div>
-              <div className="space-y-1">
+            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gray-800 shadow-sm">
+              <div className="text-sm font-semibold mb-3 text-gray-300">Curva de Maná</div>
+              <div className="space-y-2">
                 {[0, 1, 2, 3, 4, 5, 6, "7+"].map((cmc) => {
                   const count =
                     deckStats.manaCurve[cmc.toString()] || 0;
@@ -965,14 +978,14 @@ export default function ConstruirMazo() {
                       : 0;
                   return (
                     <div key={cmc} className="flex items-center gap-2">
-                      <span className="text-xs w-6">{cmc}</span>
-                      <div className="flex-1 bg-gray-700 rounded-full h-4 overflow-hidden">
+                      <span className="text-xs w-4 text-gray-500">{cmc}</span>
+                      <div className="flex-1 bg-gray-800 rounded-full h-2 overflow-hidden">
                         <div
-                          className="bg-[#0cd806] h-full transition-all"
+                          className="bg-[#0cd806] h-full transition-all duration-500 ease-out rounded-full"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-xs w-8 text-right">
+                      <span className="text-xs w-6 text-right font-medium text-gray-300">
                         {count}
                       </span>
                     </div>
@@ -982,28 +995,29 @@ export default function ConstruirMazo() {
             </div>
 
             {/* Color Distribution */}
-            <div className="bg-[#242424] p-3 rounded-lg">
-              <div className="text-sm font-semibold mb-2">
+            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gray-800 shadow-sm">
+              <div className="text-sm font-semibold mb-3 text-gray-300">
                 Distribución de Colores
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {Object.entries({
                   W: { label: "Blanco", color: "#F0E68C" },
                   U: { label: "Azul", color: "#0E68AB" },
-                  B: { label: "Negro", color: "#150B00" },
+                  B: { label: "Negro", color: "#A69F9D" },
                   R: { label: "Rojo", color: "#D3202A" },
                   G: { label: "Verde", color: "#00733E" },
                   C: { label: "Incoloro", color: "#BEB9B2" },
                 }).map(([colorKey, { label, color }]) => {
                   const count = deckStats.colorCount[colorKey] || 0;
+                  if (count === 0) return null;
                   return (
                     <div key={colorKey} className="flex items-center gap-2">
                       <div
-                        className="w-4 h-4 rounded-full border border-white"
+                        className="w-3 h-3 rounded-full shadow-sm"
                         style={{ backgroundColor: color }}
                       />
-                      <span className="text-xs flex-1">{label}</span>
-                      <span className="text-xs font-bold">{count}</span>
+                      <span className="text-xs flex-1 text-gray-300">{label}</span>
+                      <span className="text-xs font-bold text-white">{count}</span>
                     </div>
                   );
                 })}
@@ -1011,8 +1025,8 @@ export default function ConstruirMazo() {
             </div>
 
             {/* Type Breakdown */}
-            <div className="bg-[#242424] p-3 rounded-lg">
-              <div className="text-sm font-semibold mb-2">
+            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gray-800 shadow-sm">
+              <div className="text-sm font-semibold mb-3 text-gray-300">
                 Tipos de Carta
               </div>
               <div className="space-y-1">
@@ -1020,10 +1034,10 @@ export default function ConstruirMazo() {
                   ([type, count]) => (
                     <div
                       key={type}
-                      className="flex items-center justify-between text-xs"
+                      className="flex items-center justify-between text-xs py-1 border-b border-gray-800 last:border-0"
                     >
-                      <span>{categoryLabels[type]}</span>
-                      <span className="font-bold">{count}</span>
+                      <span className="text-gray-400">{categoryLabels[type]}</span>
+                      <span className="font-bold text-white">{count}</span>
                     </div>
                   )
                 )}
@@ -1036,32 +1050,37 @@ export default function ConstruirMazo() {
       {/* Card Detail Dialog */}
       {showCardDetail && selectedCard && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.7)' }}
           onClick={() => setShowCardDetail(false)}
         >
           <div
-            className="bg-[#141414] border border-[#0cd806] rounded-xl shadow-xl max-w-4xl w-full overflow-hidden"
+            className="bg-[#141414] rounded-xl max-w-4xl w-full overflow-hidden shadow-2xl"
+            style={{
+              border: '1px solid rgba(12, 216, 6, 0.3)',
+              boxShadow: '0 0 40px rgba(12, 216, 6, 0.15)'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col md:flex-row">
-              <div className="md:w-1/2 flex items-center justify-center p-3 bg-[#1a1a1a]">
+              <div className="md:w-1/2 flex items-center justify-center p-6 bg-[#1a1a1a]">
                 <img
                   src={
                     getCardImage(selectedCard, "large") ||
                     getCardImage(selectedCard, "normal")
                   }
                   alt={selectedCard.name}
-                  className="rounded-lg max-h-[500px]"
+                  className="rounded-xl shadow-2xl max-h-[500px] transition-transform hover:scale-105 duration-500"
                 />
               </div>
 
-              <div className="md:w-1/2 p-4 space-y-3">
+              <div className="md:w-1/2 p-6 space-y-4">
                 <div className="flex justify-between items-start gap-3">
-                  <h2 className="text-xl font-bold">
+                  <h2 className="text-2xl font-bold text-white">
                     {selectedCard.name}
                   </h2>
                   <button
-                    className="text-gray-500 hover:text-gray-300 cursor-pointer text-2xl leading-none"
+                    className="text-gray-500 hover:text-white cursor-pointer text-2xl leading-none transition-colors"
                     onClick={() => setShowCardDetail(false)}
                     aria-label="Cerrar"
                   >
@@ -1069,52 +1088,47 @@ export default function ConstruirMazo() {
                   </button>
                 </div>
 
-                <div className="text-sm text-white space-y-1">
-                  <div>
-                    <span className="font-semibold">Tipo:</span>{" "}
-                    {selectedCard.type_line}
+                <div className="text-sm text-gray-300 space-y-2">
+                  <div className="flex justify-between border-b border-gray-800 pb-2">
+                    <span className="font-semibold text-gray-400">Tipo:</span>
+                    <span>{selectedCard.type_line}</span>
                   </div>
-                  <div>
-                    <span className="font-semibold">Set:</span>{" "}
-                    {selectedCard.set_name} (
-                    {selectedCard.set?.toUpperCase()})
+                  <div className="flex justify-between border-b border-gray-800 pb-2">
+                    <span className="font-semibold text-gray-400">Set:</span>
+                    <span>{selectedCard.set_name} ({selectedCard.set?.toUpperCase()})</span>
                   </div>
-                  <div>
-                    <span className="font-semibold">Rareza:</span>{" "}
-                    {selectedCard.rarity}
+                  <div className="flex justify-between border-b border-gray-800 pb-2">
+                    <span className="font-semibold text-gray-400">Rareza:</span>
+                    <span className="capitalize">{selectedCard.rarity}</span>
                   </div>
-                  <div>
-                    <span className="font-semibold">
-                      Coste de Maná:
-                    </span>{" "}
+                  <div className="flex justify-between border-b border-gray-800 pb-2">
+                    <span className="font-semibold text-gray-400">Coste de Maná:</span>
+                    <ManaText text={getManaCost(selectedCard)} size="sm" />
+                  </div>
+                </div>
+
+                <div className="text-sm bg-[#242424] p-4 rounded-lg border border-gray-800">
+                  <div className="font-semibold mb-2 text-[#0cd806]">
+                    Texto de Reglas:
+                  </div>
+                  <div className="leading-relaxed text-gray-300">
                     <ManaText
-                      text={getManaCost(selectedCard)}
+                      text={getOracleText(selectedCard) || "Sin texto de reglas."}
                       size="sm"
                     />
                   </div>
                 </div>
 
-                <div className="text-sm bg-[#242424] p-3 rounded">
-                  <div className="font-semibold mb-1">
-                    Texto de Reglas:
-                  </div>
-                  <ManaText
-                    text={
-                      getOracleText(selectedCard) || "Sin texto de reglas."
-                    }
-                    size="sm"
-                  />
-                </div>
-
-                <div>
+                <div className="pt-2">
                   <button
-                    className="w-full py-2 bg-[#0cd806] hover:bg-[#09f202] text-white rounded cursor-pointer"
+                    className="w-full py-3 rounded-lg font-bold text-white shadow-lg transition-all hover:scale-105"
+                    style={{ background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)' }}
                     onClick={() => {
                       addCardToDeck(selectedCard);
                       setShowCardDetail(false);
                     }}
                   >
-                    Añadir al Mazo
+                    ➕ Añadir al Mazo
                   </button>
                 </div>
               </div>
@@ -1125,18 +1139,27 @@ export default function ConstruirMazo() {
 
       {/* Save Dialog */}
       {showSaveDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-[#141414] border border-[#0cd806] rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4">Guardar Mazo</h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.7)' }}
+        >
+          <div
+            className="bg-[#141414] rounded-xl p-6 max-w-md w-full shadow-2xl"
+            style={{
+              border: '1px solid rgba(12, 216, 6, 0.3)',
+              boxShadow: '0 0 40px rgba(12, 216, 6, 0.15)'
+            }}
+          >
+            <h3 className="text-xl font-bold mb-4 text-white">💾 Guardar Mazo</h3>
 
             {!user ? (
-              <div className="text-center">
-                <p className="mb-4">
+              <div className="text-center py-4">
+                <p className="mb-6 text-gray-300">
                   Debes iniciar sesión para guardar mazos.
                 </p>
                 <button
                   onClick={() => setShowSaveDialog(false)}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg cursor-pointer"
+                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg cursor-pointer text-white transition-colors"
                 >
                   Cerrar
                 </button>
@@ -1144,23 +1167,23 @@ export default function ConstruirMazo() {
             ) : (
               <>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-2 text-gray-300">
                     Nombre del Mazo
                   </label>
                   <input
                     type="text"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
+                    className="w-full rounded-lg border border-gray-600 bg-[#242424] text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
                     value={deckName}
                     onChange={(e) => setDeckName(e.target.value)}
                   />
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2 text-gray-300">
                     Descripción (opcional)
                   </label>
                   <textarea
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
+                    className="w-full rounded-lg border border-gray-600 bg-[#242424] text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
                     rows="3"
                     value={deckDescription}
                     onChange={(e) =>
@@ -1169,19 +1192,20 @@ export default function ConstruirMazo() {
                   />
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button
                     onClick={() => {
                       saveDeck();
                       setShowSaveDialog(false);
                     }}
-                    className="flex-1 px-4 py-2 bg-[#0cd806] hover:bg-[#09f202] rounded-lg cursor-pointer"
+                    className="flex-1 px-4 py-2.5 rounded-lg font-bold text-white shadow-md transition-transform hover:scale-105"
+                    style={{ background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)' }}
                   >
                     Guardar
                   </button>
                   <button
                     onClick={() => setShowSaveDialog(false)}
-                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg cursor-pointer"
+                    className="px-4 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-lg cursor-pointer text-white transition-colors"
                   >
                     Cancelar
                   </button>
@@ -1194,44 +1218,54 @@ export default function ConstruirMazo() {
 
       {/* Load Dialog */}
       {showLoadDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-[#141414] border border-[#0cd806] rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <h3 className="text-xl font-bold mb-4">Cargar Mazo</h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.7)' }}
+        >
+          <div
+            className="bg-[#141414] rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl custom-scrollbar"
+            style={{
+              border: '1px solid rgba(12, 216, 6, 0.3)',
+              boxShadow: '0 0 40px rgba(12, 216, 6, 0.15)'
+            }}
+          >
+            <h3 className="text-xl font-bold mb-4 text-white">📂 Cargar Mazo</h3>
 
             {!user ? (
-              <div className="text-center">
-                <p className="mb-4">
+              <div className="text-center py-4">
+                <p className="mb-6 text-gray-300">
                   Debes iniciar sesión para cargar mazos.
                 </p>
                 <button
                   onClick={() => setShowLoadDialog(false)}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg cursor-pointer"
+                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg cursor-pointer text-white transition-colors"
                 >
                   Cerrar
                 </button>
               </div>
             ) : savedDecks.length === 0 ? (
-              <div className="text-center">
-                <p className="mb-4">No tienes mazos guardados.</p>
+              <div className="text-center py-8 border-2 border-dashed border-gray-800 rounded-xl">
+                <p className="mb-4 text-gray-400">No tienes mazos guardados.</p>
                 <button
                   onClick={() => setShowLoadDialog(false)}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg cursor-pointer"
+                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg cursor-pointer text-white transition-colors"
                 >
                   Cerrar
                 </button>
               </div>
             ) : (
               <>
-                <div className="space-y-2 mb-4">
+                <div className="space-y-3 mb-6">
                   {savedDecks.map((deck) => (
                     <div
                       key={deck.id}
-                      className="bg-[#242424] p-3 rounded-lg flex items-center justify-between hover:bg-[#333]"
+                      className="bg-[#242424] p-4 rounded-xl flex items-center justify-between hover:bg-[#2a2a2a] border border-gray-800 hover:border-[#0cd806]/30 transition-all group"
                     >
                       <div className="flex-1">
-                        <div className="font-semibold">{deck.name}</div>
-                        <div className="text-xs text-gray-400">
-                          {deck.format} •{" "}
+                        <div className="font-bold text-white group-hover:text-[#0cd806] transition-colors">{deck.name}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          <span className="bg-gray-800 px-2 py-0.5 rounded text-gray-300">{deck.format}</span>
+                          <span className="mx-2">•</span>
                           {deck.cards?.reduce(
                             (sum, c) => sum + c.quantity,
                             0
@@ -1242,13 +1276,13 @@ export default function ConstruirMazo() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => loadDeck(deck)}
-                          className="px-3 py-1 bg-[#0cd806] hover:bg-[#09f202] rounded cursor-pointer text-sm"
+                          className="px-3 py-1.5 bg-[#0cd806]/20 text-[#0cd806] border border-[#0cd806]/50 hover:bg-[#0cd806] hover:text-white rounded-lg cursor-pointer text-sm transition-all font-medium"
                         >
                           Cargar
                         </button>
                         <button
                           onClick={() => deleteDeck(deck.id)}
-                          className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded cursor-pointer text-sm"
+                          className="px-3 py-1.5 bg-red-900/20 text-red-500 border border-red-900/50 hover:bg-red-600 hover:text-white rounded-lg cursor-pointer text-sm transition-all font-medium"
                         >
                           Eliminar
                         </button>
@@ -1259,7 +1293,7 @@ export default function ConstruirMazo() {
 
                 <button
                   onClick={() => setShowLoadDialog(false)}
-                  className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg cursor-pointer"
+                  className="w-full px-4 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-lg cursor-pointer text-white transition-colors font-medium"
                 >
                   Cerrar
                 </button>

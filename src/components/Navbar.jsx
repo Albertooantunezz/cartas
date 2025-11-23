@@ -49,7 +49,7 @@ export default function Navbar() {
 
     // Clases comunes
     const baseClasses =
-        "p-2 flex-col justify-center align-center border-b border-gray-300 z-10 w-full transition-colors duration-300";
+        "p-2 flex-col justify-center align-center border-b border-gray-300 z-50 w-full transition-colors duration-300";
 
     // Posición:
     // - Home: fixed

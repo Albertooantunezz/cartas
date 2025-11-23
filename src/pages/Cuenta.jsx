@@ -376,7 +376,7 @@ export default function Cuenta() {
       }
 
       setInfo(
-        "Cuenta creada. Te hemos enviado un email para verificar tu dirección. " +
+        "Cuenta creada. Te hemos enviado un email para verificar tu dirección. Revisa Spam si no lo encuentras. " +
         "Confirma tu email antes de iniciar sesión."
       );
 
@@ -761,8 +761,8 @@ export default function Cuenta() {
   // ======== Render UI ========
   if (!authChecked) {
     return (
-      <div className="min-h-screen bg-[#242424] flex items-center justify-center">
-        <div className="text-gray-200">Cargando…</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)' }}>
+        <div className="text-gray-200 text-lg">Cargando…</div>
       </div>
     );
   }
@@ -770,10 +770,16 @@ export default function Cuenta() {
   // ---- No autenticado: Login / Registro
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#242424] flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-[#141414] rounded-xl shadow border border-[#0cd806] text-white">
-          <div className="p-4 border-b">
-            <h1 className="text-xl font-bold">Tu cuenta</h1>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)' }}>
+        <div
+          className="w-full max-w-md bg-[#141414] rounded-xl shadow-2xl text-white"
+          style={{
+            border: '1px solid rgba(12, 216, 6, 0.3)',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(12, 216, 6, 0.15)'
+          }}
+        >
+          <div className="p-4 border-b" style={{ borderColor: 'rgba(12, 216, 6, 0.3)' }}>
+            <h1 className="text-2xl font-bold" style={{ textShadow: '0 0 15px rgba(12, 216, 6, 0.3)' }}>Tu cuenta</h1>
             <p className="text-sm text-gray-400">Accede o crea una cuenta para ver tus pedidos.</p>
           </div>
 
@@ -781,19 +787,27 @@ export default function Cuenta() {
             <div className="flex gap-2 mb-3">
               <button
                 onClick={() => setTab("login")}
-                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "login"
-                  ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
-                  : "bg-[#1a1a1a] border-gray-600 text-white"
+                className={`cursor-pointer px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${tab === "login"
+                  ? "text-white"
+                  : "bg-[#1a1a1a] border-gray-600 text-white hover:bg-[#2a2a2a]"
                   }`}
+                style={tab === "login" ? {
+                  background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)',
+                  boxShadow: '0 4px 12px rgba(12, 216, 6, 0.4)'
+                } : { border: '1px solid rgba(255, 255, 255, 0.1)' }}
               >
                 Iniciar sesión
               </button>
               <button
                 onClick={() => setTab("register")}
-                className={`cursor-pointer px-3 py-2 rounded-lg text-sm border ${tab === "register"
-                  ? "bg-[#0cd806] text-white hover:bg-[#09f202]"
-                  : "bg-[#1a1a1a] border-gray-600 text-white"
+                className={`cursor-pointer px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${tab === "register"
+                  ? "text-white"
+                  : "bg-[#1a1a1a] border-gray-600 text-white hover:bg-[#2a2a2a]"
                   }`}
+                style={tab === "register" ? {
+                  background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)',
+                  boxShadow: '0 4px 12px rgba(12, 216, 6, 0.4)'
+                } : { border: '1px solid rgba(255, 255, 255, 0.1)' }}
               >
                 Registrarse
               </button>
@@ -812,114 +826,119 @@ export default function Cuenta() {
             )}
           </div>
 
-          {
-            tab === "login" ? (
-              <form onSubmit={handleLogin} className="px-4 pb-4 space-y-3 text-white">
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
-                    placeholder="tu@email.com"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">Contraseña</label>
-                  <input
-                    type="password"
-                    value={pass}
-                    onChange={(e) => setPass(e.target.value)}
-                    className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
-                    placeholder="••••••••"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={handleResetPassword}
-                    disabled={loading}
-                    className="mt-1 text-xs text-gray-400 hover:text-white underline cursor-pointer disabled:opacity-60"
-                  >
-                    Olvidé mi contraseña
-                  </button>
-                </div>
+          {tab === "login" ? (
+            <form onSubmit={handleLogin} className="px-4 pb-4 space-y-3 text-white">
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Contraseña</label>
+                <input
+                  type="password"
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleResetPassword}
+                  disabled={loading}
+                  className="mt-1 text-xs text-gray-400 hover:text-white underline cursor-pointer disabled:opacity-60"
+                >
+                  Olvidé mi contraseña
+                </button>
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className=" cursor-pointer w-full mt-2 py-2 rounded-lg bg-[#0cd806] hover:bg-[#09f202] text-white disabled:opacity-60"
-                >
-                  {loading ? "Entrando…" : "Entrar"}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleRegister} className="px-4 pb-4 space-y-3 text-white">
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">
-                    Nombre de usuario
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
-                    placeholder="Tu nombre (único)"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
-                    placeholder="tu@email.com"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">Contraseña</label>
-                  <input
-                    type="password"
-                    value={pass}
-                    onChange={(e) => setPass(e.target.value)}
-                    className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
-                    placeholder="Mínimo 6 caracteres"
-                    minLength={6}
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="cursor-pointer w-full mt-2 py-2 rounded-lg bg-[#0cd806] hover:bg-[#09f202] text-white disabled:opacity-60"
-                >
-                  {loading ? "Creando cuenta…" : "Crear cuenta"}
-                </button>
-              </form>
-            )
-          }
-        </div >
-      </div >
+              <button
+                type="submit"
+                disabled={loading}
+                className="cursor-pointer w-full mt-2 py-2 rounded-lg bg-[#0cd806] hover:bg-[#09f202] text-white disabled:opacity-60 font-bold shadow-lg transition-transform hover:scale-105"
+              >
+                {loading ? "Entrando…" : "Entrar"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister} className="px-4 pb-4 space-y-3 text-white">
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">
+                  Nombre de usuario
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
+                  placeholder="Tu nombre (único)"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Contraseña</label>
+                <input
+                  type="password"
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  className="w-full rounded-lg border border-gray-600 bg-[#1a1a1a] text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806]"
+                  placeholder="Mínimo 6 caracteres"
+                  minLength={6}
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="cursor-pointer w-full mt-2 py-2 rounded-lg bg-[#0cd806] hover:bg-[#09f202] text-white disabled:opacity-60 font-bold shadow-lg transition-transform hover:scale-105"
+              >
+                {loading ? "Creando cuenta…" : "Crear cuenta"}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
     );
   }
 
   // ---- Autenticado: Dashboard
   return (
-    <div className="min-h-screen bg-[#242424] p-4 text-white">
+    <div className="min-h-screen p-4 text-white" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)' }}>
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Mi cuenta</h1>
+            <h1 className="text-3xl font-bold text-white" style={{ textShadow: '0 0 20px rgba(12, 216, 6, 0.3)' }}>Mi cuenta</h1>
             <p className="text-sm text-gray-300">
               ¡Hola, {user.displayName || profile?.name || user.email}!
             </p>
             {isAdmin && (
-              <p className="mt-1 text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-300/20 text-yellow-200 border border-yellow-400/60">
-                <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+              <p
+                className="mt-1 text-xs inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-yellow-200 font-medium"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%)',
+                  border: '1px solid rgba(251, 191, 36, 0.4)',
+                  boxShadow: '0 0 15px rgba(251, 191, 36, 0.3)'
+                }}
+              >
+                <span className="h-2 w-2 rounded-full bg-yellow-400" style={{ boxShadow: '0 0 8px rgba(251, 191, 36, 0.6)' }} />
                 Modo administrador
               </p>
             )}
@@ -927,7 +946,11 @@ export default function Cuenta() {
           <button
             onClick={handleLogout}
             disabled={loading}
-            className="px-3 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-60"
+            className="px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 hover:scale-105 disabled:opacity-60 cursor-pointer"
+            style={{
+              background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
+            }}
           >
             Cerrar sesión
           </button>

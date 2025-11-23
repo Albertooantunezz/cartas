@@ -484,18 +484,22 @@ export default function Carrito() {
 
 
   return (
-    <div className="min-h-screen bg-[#242424] p-4">
+    <div className="min-h-screen p-4" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)' }}>
       <SEO
         title="Carrito de Compras - Tienda de Cartas"
         description="Revisa los artículos en tu carrito y finaliza tu compra."
       />
       <div className="mx-auto max-w-7xl">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-white">Carrito</h1>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-white" style={{ textShadow: '0 0 20px rgba(12, 216, 6, 0.3)' }}>Carrito</h1>
+          <div className="flex items-center gap-3">
             {orderedItems.length > 0 && (
               <button
-                className="px-3 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800"
+                className="px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 hover:scale-105 disabled:opacity-60"
+                style={{
+                  background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
+                }}
                 onClick={clearSafe}
                 disabled={isClearing}
               >
@@ -503,7 +507,11 @@ export default function Carrito() {
               </button>
             )}
             <button
-              className="px-3 py-2 rounded-lg bg-[#0cd806] text-white hover:bg-[#09f202] disabled:opacity-60 cursor-pointer"
+              className="px-5 py-2.5 rounded-lg text-white font-bold transition-all duration-300 hover:scale-105 hover:shadow-2xl disabled:opacity-60 cursor-pointer"
+              style={{
+                background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)',
+                boxShadow: '0 4px 16px rgba(12, 216, 6, 0.4)'
+              }}
               onClick={async () => {
                 if (isPaying) return;
 
@@ -592,14 +600,21 @@ export default function Carrito() {
               }}
               disabled={isPaying || orderedItems.length === 0 || isClearing}
             >
-              {isPaying ? "Redirigiendo…" : "Hacer el pedido"}
+              {isPaying ? "⏳ Redirigiendo…" : "Hacer el pedido"}
             </button>
 
           </div>
         </div>
 
         {/* Filtros */}
-        <form className="mb-4 rounded-xl border border-[#0cd806] bg-[#141414] shadow-sm px-4 py-3" onSubmit={(e) => e.preventDefault()}>
+        <form
+          className="mb-5 rounded-xl bg-[#141414] shadow-lg px-5 py-4 transition-all duration-300 hover:shadow-2xl"
+          style={{
+            border: '1px solid rgba(12, 216, 6, 0.3)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4), 0 0 20px rgba(12, 216, 6, 0.1)'
+          }}
+          onSubmit={(e) => e.preventDefault()}
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-2">
               <label className="block text-xs font-medium text-gray-300 mb-1">Buscar en el carrito</label>
@@ -660,8 +675,14 @@ export default function Carrito() {
         </form>
 
         {/* Grid con scroll */}
-        <div className="rounded-xl border border-[#0cd806] bg-[#141414] shadow-sm">
-          <div className="max-h-[65vh] overflow-auto p-3">
+        <div
+          className="rounded-xl bg-[#141414] shadow-lg"
+          style={{
+            border: '1px solid rgba(12, 216, 6, 0.3)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5), 0 0 30px rgba(12, 216, 6, 0.15)'
+          }}
+        >
+          <div className="max-h-[65vh] overflow-auto p-4">
             {filteredItems.length === 0 ? (
               <div className="text-sm text-gray-300 p-4">No hay cartas que coincidan con el filtro.</div>
             ) : (
@@ -697,7 +718,17 @@ export default function Carrito() {
                     return (
                       <div
                         key={card.id || `${card.oracle_id}-fallback`}
-                        className="relative group rounded-lg overflow-hidden shadow hover:shadow-md bg-[#1a1a1a] border border-gray-700 c"
+                        className="relative group rounded-lg overflow-hidden bg-[#1a1a1a] transition-all duration-300 hover:scale-105"
+                        style={{
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.6), 0 0 20px rgba(12, 216, 6, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.4)';
+                        }}
                       >
                         {/* Imagen clickable → abre estilos */}
                         <button
@@ -755,12 +786,16 @@ export default function Carrito() {
                             </button>
                           </div>
                           <button
-                            className="px-2 py-1 bg-[#0cd806] hover:bg-[#09f202] rounded text-xs cursor-pointer"
+                            className="px-2 py-1 rounded text-xs cursor-pointer font-medium transition-all duration-200"
+                            style={{
+                              background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)',
+                              boxShadow: '0 2px 8px rgba(12, 216, 6, 0.3)'
+                            }}
                             onClick={() => remove?.(card.id)}
                             title="Eliminar del carrito"
                             disabled={isClearing}
                           >
-                            Eliminar
+                            🗑️ Eliminar
                           </button>
                         </div>
                       </div>
@@ -792,9 +827,15 @@ export default function Carrito() {
           Dialogo: Estilos (prints)
          ======================= */}
       {printsOpen && (
-        <div className="fixed inset-0 z-50  flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 " onClick={() => setPrintsOpen(false)} />
-          <div className="relative bg-[#141414] rounded-xl shadow-xl max-w-6xl w-full overflow-hidden ">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(8px)' }}>
+          <div className="absolute inset-0 bg-black/70" onClick={() => setPrintsOpen(false)} />
+          <div
+            className="relative bg-[#141414] rounded-xl max-w-6xl w-full overflow-hidden"
+            style={{
+              border: '1px solid rgba(12, 216, 6, 0.3)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(12, 216, 6, 0.2)'
+            }}
+          >
             <div className="px-4 py-3 border-b flex items-center justify-between">
               <h3 className="text-lg font-semibold">
                 Estilos de {printsCard?.card?.name || "—"}

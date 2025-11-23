@@ -203,79 +203,96 @@ export default function Home() {
 
 
   return (
-    <div className="relative top-0 w-full flex flex-col items-center justify-center">
+    <div className="relative top-0 w-full flex flex-col items-center justify-center min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)' }}>
       <SEO
         title="Inicio - Tienda de Cartas"
         description="Bienvenido a la mejor tienda de cartas Magic. Explora nuestro catálogo y construye tu mazo."
       />
-      <div className="relative">
-        <img src="/banner.jpg" alt="Banner Home" className="w-2000 h-140 object-cover opacity-70" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white  w-full  text-center">
-          <h2 className="text-3xl font-bold">¡Explora nuestro catálogo!</h2>
+      <div className="relative w-full h-[500px] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0f0f0f] z-10"></div>
+        <img src="/banner.jpg" alt="Banner Home" className="w-full h-full object-cover opacity-60" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white w-full text-center z-20 px-4">
+          <h2 className="text-5xl md:text-4xl font-bold mb-6" style={{ textShadow: '0 0 30px rgba(12, 216, 6, 0.5)' }}>¡Explora nuestro catálogo!</h2>
           <a href="/catalogo">
-            <button className="bg-[#0cd806] text-white px-4 py-2 rounded-xl hover:bg-[#09f202] mt-5 w-50 cursor-pointer">
-              Catálogo
+            <button
+              className="text-white px-4 py-2 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 cursor-pointer"
+              style={{
+                background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)',
+                boxShadow: '0 0 20px rgba(12, 216, 6, 0.4)'
+              }}
+            >
+              Ver Catálogo
             </button>
           </a>
         </div>
       </div>
 
-      <div className="text-center bg-black-800 w-full p-10 shadow-lg text-white md:px-20 lg:px-60">
-        <h2 className="text-2xl font-bold ">Bienvenido a la tienda</h2>
-        <span className="w-full bg-[#0cd806] h-1 block mt-5 mb-5 rounded-xl"></span>
-        <p className="text-lg">
-          Descubre la mejor selección de Proxys al mejor precio. En nuestra tienda encontrarás desde las últimas novedades hasta joyas clásicas para completar tu colección. Utiliza nuestro constructor de mazos avanzado para diseñar tu estrategia ganadora y adquiere todas las cartas que necesitas con un solo clic. ¡Únete a nuestra comunidad y lleva tu juego al siguiente nivel!
-        </p>
-
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-4 mt-10">
-          <div className="bg-[#0cd806] p-4 rounded-lg shadow">
-            <h3 className="font-bold mt-2 text-4xl">2€ p/u</h3>
-            <p>8 cartas</p>
-          </div>
-          <div className="bg-[#0cd806] p-4 rounded-lg shadow">
-            <h3 className="font-bold mt-2 text-4xl">1.5€ p/u</h3>
-            <p>+8 cartas</p>
-          </div>
-          <div className="bg-[#0cd806] p-4 rounded-lg shadow">
-            <h3 className="font-bold mt-2 text-4xl">1€ p/u</h3>
-            <p>+40 cartas</p>
-          </div>
-          <div className="bg-[#0cd806] p-4 rounded-lg shadow">
-            <h3 className="font-bold mt-2 text-4xl">0.5€ p/u</h3>
-            <p>+50 cartas</p>
-          </div>
-        </div>
-
-        {/* ---------- Importador Moxfield ---------- */}
-        <div className="mt-12 text-left">
-          <h3 className="text-xl font-semibold mb-2">Importar lista (Moxfield)</h3>
-          <p className="text-sm text-white mb-3">
-            Pega líneas en formato <code>1 Nombre (SET) Número</code>. Previsualizamos y podrás guardar todas las que se encuentren; si alguna falla, verás el aviso dentro del diálogo.
+      <div className="text-center w-full p-10 md:px-20 lg:px-60 relative z-10">
+        <div className="bg-[#141414] p-8 rounded-2xl shadow-2xl border border-[#0cd806]/30 backdrop-blur-sm">
+          <h2 className="text-3xl font-bold mb-4">Bienvenido a la tienda</h2>
+          <span className="w-32 h-1 bg-[#0cd806] block mx-auto mb-6 rounded-full shadow-[0_0_10px_#0cd806]"></span>
+          <p className="text-lg text-gray-300 leading-relaxed">
+            Descubre la mejor selección de Proxys al mejor precio. En nuestra tienda encontrarás desde las últimas novedades hasta joyas clásicas para completar tu colección. Utiliza nuestro constructor de mazos avanzado para diseñar tu estrategia ganadora y adquiere todas las cartas que necesitas con un solo clic. ¡Únete a nuestra comunidad y lleva tu juego al siguiente nivel!
           </p>
-          <textarea
-            className="w-full h-64 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0cd806] font-mono text-sm"
-            placeholder={`1 Ancient Tomb (VMA) 289\n1 Haunted Ridge (MID) 263 F\n1 Urza's Saga (MH2) 259\n...`}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <div className="mt-3 flex gap-2">
-            <button
-              className="px-4 py-2 rounded bg-[#0cd806] hover:bg-[#09f202] text-white disabled:opacity-60 cursor-pointer"
-              onClick={handleImport}
-              disabled={busy || !text.trim()}
-            >
-              {busy ? "Procesando..." : "Añadir lista al carrito"}
-            </button>
-            <button
-              className="px-3 py-2 text-black rounded bg-gray-100 hover:bg-gray-200 cursor-pointer"
-              onClick={() => {
-                setText("");
-                setResult(null);
-              }}
-              disabled={busy}
-            >
-              Limpiar
-            </button>
+
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-4 mt-10">
+            {[
+              { price: "2€", desc: "8 cartas" },
+              { price: "1.5€", desc: "+8 cartas" },
+              { price: "1€", desc: "+40 cartas" },
+              { price: "0.5€", desc: "+50 cartas" }
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="p-6 rounded-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-xl group"
+                style={{
+                  background: 'linear-gradient(145deg, #1a1a1a, #242424)',
+                  border: '1px solid rgba(12, 216, 6, 0.2)'
+                }}
+              >
+                <h3 className="font-bold mt-2 text-4xl text-[#0cd806] group-hover:text-[#09f202]" style={{ textShadow: '0 0 10px rgba(12, 216, 6, 0.2)' }}>{item.price}</h3>
+                <p className="text-gray-400 mt-2 font-medium">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* ---------- Importador Moxfield ---------- */}
+          <div className="mt-16 text-left bg-[#1a1a1a] p-8 rounded-2xl border border-gray-800 shadow-lg">
+            <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              Importar lista <span className="text-[#0cd806] text-sm font-normal">(Moxfield)</span>
+            </h3>
+            <p className="text-sm text-gray-400 mb-4">
+              Pega líneas en formato <code>1 Nombre (SET) Número</code>. Previsualizamos y podrás guardar todas las que se encuentren; si alguna falla, verás el aviso dentro del diálogo.
+            </p>
+            <textarea
+              className="w-full h-64 rounded-xl border border-gray-700 bg-[#0f0f0f] text-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#0cd806] font-mono text-sm transition-all duration-300 focus:border-[#0cd806]"
+              placeholder={`1 Ancient Tomb (VMA) 289\n1 Haunted Ridge (MID) 263 F\n1 Urza's Saga (MH2) 259\n...`}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+            <div className="mt-4 flex gap-3">
+              <button
+                className="cursor-pointer px-6 py-3 rounded-lg font-bold text-white transition-all duration-300 hover:scale-105 disabled:opacity-60 disabled:hover:scale-100"
+                style={{
+                  background: 'linear-gradient(135deg, #0cd806 0%, #09f202 100%)',
+                  boxShadow: '0 4px 12px rgba(12, 216, 6, 0.3)'
+                }}
+                onClick={handleImport}
+                disabled={busy || !text.trim()}
+              >
+                {busy ? "Procesando..." : "Añadir lista al carrito"}
+              </button>
+              <button
+                className="cursor-pointer px-6 py-3 rounded-lg bg-[#242424] text-white border border-gray-700 hover:bg-[#2a2a2a] transition-colors"
+                onClick={() => {
+                  setText("");
+                  setResult(null);
+                }}
+                disabled={busy}
+              >
+                Limpiar
+              </button>
+            </div>
           </div>
 
           {result && (
@@ -306,14 +323,23 @@ export default function Home() {
           Dialogo: Previsualización
          ======================= */}
       {preAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setPreAddOpen(false)} />
-          <div className="relative bg-[#242424] rounded-xl shadow-xl max-w-6xl w-full overflow-hidden">
-            <div className="px-4 py-3 border-b flex items-center justify-between">
-              <h3 className="text-lg font-semibold">
-                Previsualizar {preAddCards.reduce((sum, it) => sum + (it.entry?.qty || 1), 0)} carta(s)
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.7)' }}
+        >
+          <div className="absolute inset-0" onClick={() => setPreAddOpen(false)} />
+          <div
+            className="relative bg-[#141414] rounded-xl w-full max-w-6xl overflow-hidden"
+            style={{
+              border: '1px solid rgba(12, 216, 6, 0.3)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(12, 216, 6, 0.15)'
+            }}
+          >
+            <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-[#1a1a1a]">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                Previsualizar <span className="text-[#0cd806]">{preAddCards.reduce((sum, it) => sum + (it.entry?.qty || 1), 0)}</span> carta(s)
               </h3>
-              <button className="text-gray-500 hover:text-gray-700" onClick={() => setPreAddOpen(false)}>✕</button>
+              <button className="text-gray-400 hover:text-white transition-colors text-2xl" onClick={() => setPreAddOpen(false)}>✕</button>
             </div>
 
             {/* Aviso de fallos: no bloquea el guardado */}
@@ -405,8 +431,19 @@ export default function Home() {
          ======================= */}
       {
         openDialog && selectedCard && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setOpenDialog(false)}>
-            <div className="bg-[#141414] border border-[#0cd806] rounded-xl shadow-xl max-w-4xl w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.7)' }}
+            onClick={() => setOpenDialog(false)}
+          >
+            <div
+              className="bg-[#141414] rounded-xl max-w-4xl w-full overflow-hidden shadow-2xl"
+              style={{
+                border: '1px solid rgba(12, 216, 6, 0.3)',
+                boxShadow: '0 0 40px rgba(12, 216, 6, 0.15)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex flex-col md:flex-row">
                 <div className="md:w-1/2 flex items-center justify-center p-3 bg-[#1a1a1a]">
                   <img
