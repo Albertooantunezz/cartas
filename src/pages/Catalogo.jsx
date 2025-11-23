@@ -488,7 +488,7 @@ export default function Catalogo() {
               boxShadow: '0 4px 16px rgba(12, 216, 6, 0.4)'
             }}
           >
-            🔽 Cargar más
+            Cargar más
           </button>
         ) : cards.length > 0 ? (
           <div className="text-sm text-gray-600">No hay más resultados.</div>
